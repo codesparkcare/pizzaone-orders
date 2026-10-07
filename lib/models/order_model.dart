@@ -56,6 +56,7 @@ class OrderModel {
   bool get isReady => status == 'ready';
   bool get isDelivered => status == 'delivered';
   bool get isCancelled => status == 'cancelled';
+  bool get isActive => !isDelivered && !isCancelled;
 
   String get orderTypeLabel => getOrderTypeLabel();
 

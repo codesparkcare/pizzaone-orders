@@ -16,8 +16,13 @@ class OrderFilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final activeOrdersCount = (counts['pending'] ?? 0) +
+        (counts['confirmed'] ?? 0) +
+        (counts['preparing'] ?? 0) +
+        (counts['ready'] ?? 0);
+
     final filters = [
-      {'key': 'all', 'label': context.tr('filter_all'), 'count': counts.values.fold(0, (a, b) => a + b), 'color': AppTheme.textPrimary},
+      {'key': 'all', 'label': context.tr('filter_all'), 'count': activeOrdersCount, 'color': AppTheme.textPrimary},
       {'key': 'pending', 'label': context.tr('filter_pending'), 'count': counts['pending'] ?? 0, 'color': AppTheme.statusPending},
       {'key': 'preparing', 'label': context.tr('filter_kitchen'), 'count': (counts['confirmed'] ?? 0) + (counts['preparing'] ?? 0), 'color': AppTheme.statusPreparing},
       {'key': 'ready', 'label': context.tr('filter_ready'), 'count': counts['ready'] ?? 0, 'color': AppTheme.statusReady},

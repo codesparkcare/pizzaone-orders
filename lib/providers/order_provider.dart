@@ -37,6 +37,17 @@ class OrderProvider with ChangeNotifier {
   List<OrderModel> get orders {
     var filtered = _orders;
 
+    if (_statusFilter == 'all') {
+      // In "All" tab: show only active / new orders (pending, confirmed, preparing, ready)
+      // Delivered orders move to the "Delivered" tab!
+      filtered = filtered.where((o) => !o.isDelivered && !o.isCancelled).toList();
+    } else if (_statusFilter == 'preparing') {
+      // "In Kitchen" tab includes both confirmed and preparing
+      filtered = filtered.where((o) => o.isConfirmed || o.isPreparing).toList();
+    } else if (_statusFilter != 'all') {
+      filtered = filtered.where((o) => o.status == _statusFilter).toList();
+    }
+
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
       filtered = filtered.where((o) {
@@ -64,6 +75,8 @@ class OrderProvider with ChangeNotifier {
   int get preparingCount => (_counts['confirmed'] ?? 0) + (_counts['preparing'] ?? 0);
   int get readyCount => _counts['ready'] ?? 0;
   int get deliveredCount => _counts['delivered'] ?? 0;
+  int get cancelledCount => _counts['cancelled'] ?? 0;
+  int get activeOrdersCount => pendingCount + preparingCount + readyCount;
 
   void setStatusFilter(String filter) {
     _statusFilter = filter;
@@ -165,31 +178,35 @@ class OrderProvider with ChangeNotifier {
 
   /// Detect new incoming orders and trigger alarm
   void _checkForNewPendingOrders(List<OrderModel> freshOrders) {
-    final currentPending = freshOrders.where((o) => o.isPending).map((o) => o.id).toSet();
-
-    // Find orders that were NOT known before
-    final newOrders = currentPending.difference(_knownPendingOrderIds);
-
-    if (newOrders.isNotEmpty && _knownPendingOrderIds.isNotEmpty) {
-      debugPrint('[OrderProvider] NEW ORDERS DETECTED: $newOrders');
-      _hasActiveAlert = true;
-
-      // Start continuous ringing chime
-      AudioAlertService().startRingtone();
-
-      // Show local push banner
-      NotificationService().showOrderNotification(
-        title: '🍕 NOUVELLE COMMANDE REÇUE !',
-        body: '${newOrders.length} nouvelle(s) commande(s) en attente de confirmation.',
-        payload: newOrders.first.toString(),
-      );
-    } else if (currentPending.isEmpty) {
-      // No more pending orders -> stop ringing
+    final pendingTotal = _counts['pending'] ?? 0;
+    if (pendingTotal == 0) {
       _hasActiveAlert = false;
       AudioAlertService().stopRingtone();
+      _knownPendingOrderIds.clear();
+      return;
     }
 
-    _knownPendingOrderIds = currentPending;
+    // Only update ID tracking if we are viewing a filter that contains pending orders
+    if (_statusFilter == 'all' || _statusFilter == 'pending') {
+      final currentPending = freshOrders.where((o) => o.isPending).map((o) => o.id).toSet();
+      final newOrders = currentPending.difference(_knownPendingOrderIds);
+
+      if (newOrders.isNotEmpty && _knownPendingOrderIds.isNotEmpty) {
+        debugPrint('[OrderProvider] NEW ORDERS DETECTED: $newOrders');
+        _hasActiveAlert = true;
+
+        // Start continuous ringing chime
+        AudioAlertService().startRingtone();
+
+        // Show local push banner
+        NotificationService().showOrderNotification(
+          title: '🍕 NOUVELLE COMMANDE REÇUE !',
+          body: '${newOrders.length} nouvelle(s) commande(s) en attente de confirmation.',
+          payload: newOrders.first.toString(),
+        );
+      }
+      _knownPendingOrderIds = currentPending;
+    }
   }
 
   /// Fetch active shops
@@ -221,6 +238,10 @@ class OrderProvider with ChangeNotifier {
 
       if (response.success && response.data is Map && response.data['stats'] is Map) {
         _dashboardStats = Map<String, dynamic>.from(response.data['stats']);
+        if (_dashboardStats['status_counts'] is Map) {
+          final rawCounts = _dashboardStats['status_counts'] as Map;
+          _counts = rawCounts.map((k, v) => MapEntry(k.toString(), int.tryParse(v.toString()) ?? 0));
+        }
         notifyListeners();
       }
     } catch (e) {
@@ -248,6 +269,7 @@ class OrderProvider with ChangeNotifier {
         final idx = _orders.indexWhere((o) => o.id == orderId);
         if (idx != -1) {
           final old = _orders[idx];
+          final previousStatus = old.status;
           _orders[idx] = OrderModel(
             id: old.id,
             orderType: old.orderType,
@@ -270,19 +292,26 @@ class OrderProvider with ChangeNotifier {
             itemsCount: old.itemsCount,
             items: old.items,
           );
+
+          // Update counts locally immediately
+          if (_counts.containsKey(previousStatus) && (_counts[previousStatus] ?? 0) > 0) {
+            _counts[previousStatus] = _counts[previousStatus]! - 1;
+          }
+          _counts[newStatus] = (_counts[newStatus] ?? 0) + 1;
         }
 
         // Re-check pending orders
         _knownPendingOrderIds.remove(orderId);
-        if (_orders.where((o) => o.isPending).isEmpty) {
+        if ((_counts['pending'] ?? 0) == 0) {
           _hasActiveAlert = false;
           AudioAlertService().stopRingtone();
         }
 
         notifyListeners();
 
-        // Refresh latest numbers in background
+        // Refresh latest numbers and sync with server
         fetchDashboard(baseUrl: baseUrl, token: token);
+        fetchOrders(baseUrl: baseUrl, token: token, silent: true);
         return true;
       }
     } catch (e) {

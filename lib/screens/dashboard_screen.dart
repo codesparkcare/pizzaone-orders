@@ -383,33 +383,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final filteredOrders = order.orders;
 
     if (filteredOrders.isEmpty) {
+      final isAllFilter = order.statusFilter == 'all';
+      final hasDelivered = order.deliveredCount > 0;
+
       return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceElevated,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.inventory_2_outlined, size: 48, color: AppTheme.textMuted),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(22),
+                  decoration: const BoxDecoration(
+                    color: AppTheme.surfaceElevated,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isAllFilter ? Icons.check_circle_outline_rounded : Icons.inventory_2_outlined,
+                    size: 48,
+                    color: isAllFilter ? AppTheme.statusDelivered : AppTheme.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  isAllFilter
+                      ? (settings.isEnglish ? 'No Active Orders' : 'Aucune commande en cours')
+                      : context.tr('empty_orders_title'),
+                  style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  isAllFilter
+                      ? (settings.isEnglish
+                          ? 'New incoming orders will appear here automatically.'
+                          : 'Les nouvelles commandes apparaîtront ici automatiquement.')
+                      : context.tr('empty_orders_subtitle'),
+                  style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
+                  textAlign: TextAlign.center,
+                ),
+                if (isAllFilter && hasDelivered) ...[
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.surfaceElevated,
+                      foregroundColor: AppTheme.statusDelivered,
+                      side: BorderSide(color: AppTheme.statusDelivered.withValues(alpha: 0.5)),
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    icon: const Icon(Icons.moped_rounded, size: 18),
+                    label: Text(
+                      settings.isEnglish
+                          ? 'View Delivered Orders (${order.deliveredCount})'
+                          : 'Voir les commandes livrées (${order.deliveredCount})',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                    onPressed: () {
+                      order.setStatusFilter('delivered');
+                      order.fetchOrders(baseUrl: settings.baseUrl, token: auth.currentUser?.token);
+                    },
+                  ),
+                ],
+              ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              context.tr("empty_orders_title"),
-              style: const TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              context.tr("empty_orders_subtitle"),
-              style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
-            ),
-          ],
+          ),
         ),
       );
     }
