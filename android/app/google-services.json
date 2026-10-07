@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "2627187244",
+    "project_id": "pizzaone-25548",
+    "storage_bucket": "pizzaone-25548.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:2627187244:android:77628386f18d99ab2dd789",
+        "android_client_info": {
+          "package_name": "com.codesparl.pizzaoneorders"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3VXIhjiM54cn-dVrEYlG3g9BmIEHjfNA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:2627187244:android:1e3edaee502486a52dd789",
+        "android_client_info": {
+          "package_name": "com.pizzaone.order"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3VXIhjiM54cn-dVrEYlG3g9BmIEHjfNA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
