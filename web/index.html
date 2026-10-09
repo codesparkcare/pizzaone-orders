@@ -405,7 +405,19 @@
 
     function showPwaInstallModal() {
       if (isStandalone) {
-        console.log('[PWA] Already running in standalone mode, skipping install prompt');
+        alert('Pizza One is already installed and running on this device!');
+        return;
+      }
+      if (!isIOS && deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        deferredInstallPrompt.userChoice.then(function(choice) {
+          console.log('[PWA] User choice:', choice.outcome);
+          if (choice.outcome === 'accepted') {
+            console.log('[PWA] User accepted installation! 🎉');
+          }
+        }).catch(function(err) {
+          console.warn('[PWA] Prompt error:', err);
+        });
         return;
       }
       var overlay = document.getElementById('pwa-install-overlay');
@@ -595,13 +607,6 @@
           loading.style.display = 'none';
         }, 400);
       }
-      // Show install prompt 2.5 seconds AFTER the login screen is displayed
-      setTimeout(function() {
-        var dismissed = sessionStorage.getItem('pwa_install_prompt_dismissed');
-        if (!isStandalone && !dismissed) {
-          showPwaInstallModal();
-        }
-      }, 2500);
     });
 
     // Fallback: hide loading after 6 seconds regardless so app is never stuck

@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../core/theme/app_theme.dart';
+import '../core/utils/pwa_install_service.dart';
 import '../providers/auth_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/order_provider.dart';
@@ -128,7 +130,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 16),
+                    // Install App (PWA) Button (replaces former LIVE badge)
+                    if (kIsWeb) ...[
+                      Align(
+                        alignment: Alignment.topRight,
+                        child: _buildInstallPwaButton(),
+                      ),
+                      const SizedBox(height: 12),
+                    ] else ...[
+                      const SizedBox(height: 16),
+                    ],
 
                     // Logo Emblem
                     Container(
@@ -459,6 +470,55 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: color,
                     ),
                   ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInstallPwaButton() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => PwaInstallService.promptInstall(),
+        borderRadius: BorderRadius.circular(20),
+        splashColor: AppTheme.primary.withValues(alpha: 0.3),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppTheme.primary.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppTheme.primary.withValues(alpha: 0.6),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppTheme.primary.withValues(alpha: 0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.download_for_offline_rounded,
+                size: 15,
+                color: AppTheme.primary,
+              ),
+              SizedBox(width: 6),
+              Text(
+                'Install App (PWA)',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
           ),
         ),
       ),
