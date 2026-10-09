@@ -439,13 +439,6 @@
       console.log('[PWA] beforeinstallprompt event captured ✅');
       e.preventDefault();
       deferredInstallPrompt = e;
-
-      // Automatically show modal prompt
-      if (!isStandalone) {
-        setTimeout(function() {
-          showPwaInstallModal();
-        }, 1200);
-      }
     });
 
     // 2. Wire buttons once DOM is loaded
@@ -490,15 +483,7 @@
       hidePwaInstallModal();
     });
 
-    // 4. Fallback: If not in standalone mode, auto-show popup after 2 seconds
-    if (!isStandalone) {
-      setTimeout(function() {
-        var dismissed = sessionStorage.getItem('pwa_install_prompt_dismissed');
-        if (!dismissed) {
-          showPwaInstallModal();
-        }
-      }, 2000);
-    }
+
 
     // 3. iOS Audio Unlock: Safari blocks audio until user interaction.
     //    We pre-unlock the AudioContext on the first user touch/click
@@ -608,18 +593,25 @@
         loading.classList.add('hidden');
         setTimeout(function() {
           loading.style.display = 'none';
-        }, 500);
+        }, 400);
       }
+      // Show install prompt 2.5 seconds AFTER the login screen is displayed
+      setTimeout(function() {
+        var dismissed = sessionStorage.getItem('pwa_install_prompt_dismissed');
+        if (!isStandalone && !dismissed) {
+          showPwaInstallModal();
+        }
+      }, 2500);
     });
 
-    // Fallback: hide loading after 8 seconds regardless
+    // Fallback: hide loading after 6 seconds regardless so app is never stuck
     setTimeout(function() {
       var loading = document.getElementById('pwa-loading');
       if (loading) {
         loading.classList.add('hidden');
-        setTimeout(function() { loading.style.display = 'none'; }, 500);
+        setTimeout(function() { loading.style.display = 'none'; }, 400);
       }
-    }, 8000);
+    }, 6000);
 
     // 7. Register Firebase Messaging Service Worker for Web Push
     if ('serviceWorker' in navigator) {

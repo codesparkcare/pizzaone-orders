@@ -39,7 +39,7 @@ const FIREBASE_CONFIG = {
 // ================================================================
 const APP_NAME = 'Pizza One';
 const APP_URL = 'https://pizzaonerestaurant.com/apporder/';
-const CACHE_NAME = 'pizzaone-pwa-v1';
+const CACHE_NAME = 'pizzaone-pwa-v4';
 const NOTIFICATION_ICON = '/apporder/icons/Icon-192.png';
 const NOTIFICATION_BADGE = '/apporder/icons/Icon-192.png';
 
@@ -214,34 +214,20 @@ self.addEventListener('activate', function(event) {
 });
 
 // ================================================================
-//  Fetch Handler – Cache-First for app assets, network for API
+//  Fetch Handler – Network-First for app updates, cache fallback
 // ================================================================
 self.addEventListener('fetch', function(event) {
   const url = new URL(event.request.url);
 
-  // Never cache API requests
+  // Never intercept API requests
   if (url.pathname.startsWith('/api/')) {
-    return; // Let it go to network normally
-  }
-
-  // For navigation requests, serve the app shell (index.html)
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(function() {
-        return caches.match('/apporder/index.html');
-      })
-    );
     return;
   }
 
-  // Cache-first strategy for static assets
+  // Network-First strategy: always fetch latest code from server, fallback to cache if offline
   event.respondWith(
-    caches.match(event.request).then(function(cachedResponse) {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then(function(networkResponse) {
-        // Cache successful responses for static assets
+    fetch(event.request)
+      .then(function(networkResponse) {
         if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then(function(cache) {
@@ -249,8 +235,15 @@ self.addEventListener('fetch', function(event) {
           });
         }
         return networkResponse;
-      });
-    })
+      })
+      .catch(function() {
+        return caches.match(event.request).then(function(cachedResponse) {
+          if (cachedResponse) return cachedResponse;
+          if (event.request.mode === 'navigate') {
+            return caches.match('/apporder/index.html');
+          }
+        });
+      })
   );
 });
 
