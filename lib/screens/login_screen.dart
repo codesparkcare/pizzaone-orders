@@ -35,12 +35,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _onDigitPressed(String digit) {
-    if (_pin.length < 4) {
+    if (_pin.length < 6) {
       HapticFeedback.lightImpact();
       setState(() {
         _pin += digit;
       });
-      if (_pin.length == 4) {
+      if (_pin.length == 6) {
         _submitPin(_pin);
       }
     }
@@ -246,7 +246,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 6),
                           const Text(
-                            'Saisissez le code PIN à 4 chiffres',
+                            'Saisissez le code PIN à 6 chiffres',
                             style: TextStyle(
                               fontSize: 12,
                               color: AppTheme.textSecondary,
@@ -254,7 +254,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 22),
 
-                          // 4 PIN Dots / Spinner
+                          // 6 PIN Dots / Spinner
                           if (auth.isLoading)
                             const SizedBox(
                               height: 40,
@@ -272,15 +272,15 @@ class _LoginScreenState extends State<LoginScreen> {
                           else
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              children: List.generate(4, (index) {
+                              children: List.generate(6, (index) {
                                 final isFilled = index < _pin.length;
                                 return AnimatedContainer(
                                   duration: const Duration(milliseconds: 180),
                                   curve: Curves.easeOutBack,
                                   margin: const EdgeInsets.symmetric(
-                                      horizontal: 10),
-                                  width: isFilled ? 20 : 16,
-                                  height: isFilled ? 20 : 16,
+                                      horizontal: 6),
+                                  width: isFilled ? 18 : 14,
+                                  height: isFilled ? 18 : 14,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     color: isFilled
@@ -290,7 +290,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       color: isFilled
                                           ? AppTheme.primary
                                           : AppTheme.surfaceBorder,
-                                      width: 2.2,
+                                      width: 2,
                                     ),
                                     boxShadow: isFilled
                                         ? [
@@ -358,7 +358,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                'Code PIN par défaut : 1234',
+                                'Code PIN : 812282',
                                 style: TextStyle(
                                   color:
                                       AppTheme.textMuted.withValues(alpha: 0.8),

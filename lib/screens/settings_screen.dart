@@ -458,24 +458,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Saisissez un nouveau code PIN à 4 chiffres (ex: 1234) :',
+              'Saisissez un nouveau code PIN à 6 chiffres (ex: 812282) :',
               style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: controller,
               keyboardType: TextInputType.number,
-              maxLength: 4,
+              maxLength: 6,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 24,
-                letterSpacing: 10,
+                fontSize: 22,
+                letterSpacing: 8,
                 fontWeight: FontWeight.bold,
                 color: AppTheme.primary,
               ),
               decoration: InputDecoration(
                 counterText: '',
-                hintText: '••••',
+                hintText: '••••••',
                 filled: true,
                 fillColor: AppTheme.surfaceElevated,
                 border: OutlineInputBorder(
@@ -495,7 +495,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
             onPressed: () async {
               final newPin = controller.text.trim();
-              if (newPin.length == 4 && RegExp(r'^[0-9]{4}$').hasMatch(newPin)) {
+              if (newPin.length == 6 && RegExp(r'^[0-9]{6}$').hasMatch(newPin)) {
                 await auth.setPinCode(newPin);
                 if (ctx.mounted) Navigator.pop(ctx);
                 if (mounted) {
@@ -511,7 +511,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 if (ctx.mounted) {
                   ScaffoldMessenger.of(ctx).showSnackBar(
                     const SnackBar(
-                      content: Text('Le code PIN doit comporter exactement 4 chiffres.'),
+                      content: Text('Le code PIN doit comporter exactement 6 chiffres.'),
                       backgroundColor: Colors.red,
                       behavior: SnackBarBehavior.floating,
                     ),

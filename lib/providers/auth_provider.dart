@@ -14,7 +14,7 @@ class AuthProvider with ChangeNotifier {
   static const String _keySavedPassword = 'auth_saved_password';
 
   static const String _keyPinCode = 'auth_pin_code';
-  static const String defaultPin = '1234';
+  static const String defaultPin = '812282';
 
   UserModel? _currentUser;
   bool _isLoading = false;
@@ -31,7 +31,7 @@ class AuthProvider with ChangeNotifier {
   DateTime? get lastKeepAliveCheck => _lastKeepAliveCheck;
   bool get isServerConnected => _isServerConnected;
 
-  /// Get current saved PIN or default '1234'
+  /// Get current saved PIN or default '812282'
   Future<String> getPinCode() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_keyPinCode) ?? defaultPin;
@@ -44,7 +44,7 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Login using 4-digit PIN code
+  /// Login using 6-digit PIN code (812282)
   Future<bool> loginWithPin({
     required String pin,
     required String baseUrl,
@@ -52,8 +52,8 @@ class AuthProvider with ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final savedPin = prefs.getString(_keyPinCode) ?? defaultPin;
 
-    if (pin != savedPin && pin != defaultPin && pin != '0000') {
-      _errorMessage = 'Code PIN incorrect (par défaut : $defaultPin)';
+    if (pin != savedPin && pin != defaultPin) {
+      _errorMessage = 'Code PIN incorrect';
       notifyListeners();
       return false;
     }
