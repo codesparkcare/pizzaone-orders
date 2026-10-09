@@ -11,7 +11,6 @@ import "../providers/order_provider.dart";
 import "../widgets/audio_alarm_banner.dart";
 import "../widgets/order_card.dart";
 import "../widgets/order_filter_bar.dart";
-import "../widgets/server_indicator_chip.dart";
 import "../widgets/summary_stat_card.dart";
 import "order_detail_screen.dart";
 import "settings_screen.dart";
@@ -140,45 +139,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         actions: [
-          // Server Indicator Chip (compact)
-          const ServerIndicatorChip(),
-          const SizedBox(width: 4),
-
-          // Language Switcher Button (English <-> French)
-          InkWell(
-            borderRadius: BorderRadius.circular(8),
-            onTap: () => settings.toggleLanguage(),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceElevated,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: AppTheme.primary.withValues(alpha: 0.6),
-                  width: 1.2,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    settings.isEnglish ? "🇬🇧" : "🇫🇷",
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    settings.language.toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 2),
 
           // Screen Wake Lock (iOS PWA Kitchen Mode - keeps screen on)
           if (kIsWeb)

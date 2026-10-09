@@ -316,7 +316,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
 
           // Section 5: Security / PIN Code
-          _buildSectionHeader('SÉCURITÉ / CODE PIN D\'ACCÈS'),
+          _buildSectionHeader('SECURITY / PIN ACCESS CODE'),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -340,12 +340,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Code PIN d\'accès',
+                        'PIN Access Code',
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.textPrimary),
                       ),
                       SizedBox(height: 2),
                       Text(
-                        'Accès rapide à l\'application',
+                        'Quick application access',
                         style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
                       ),
                     ],
@@ -358,7 +358,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   onPressed: () => _showChangePinDialog(),
-                  child: const Text('Modifier', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: const Text('Change', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -452,13 +452,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppTheme.surface,
-        title: const Text('Modifier le code PIN', style: TextStyle(color: AppTheme.textPrimary)),
+        title: const Text('Change PIN Code', style: TextStyle(color: AppTheme.textPrimary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Saisissez un nouveau code PIN à 6 chiffres (ex: 812282) :',
+              'Enter new 6-digit PIN code (e.g. 812282):',
               style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 16),
@@ -489,7 +489,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Annuler', style: TextStyle(color: AppTheme.textMuted)),
+            child: const Text('Cancel', style: TextStyle(color: AppTheme.textMuted)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primary),
@@ -501,7 +501,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Code PIN mis à jour avec succès !'),
+                      content: Text('PIN code updated successfully!'),
                       backgroundColor: Colors.green,
                       behavior: SnackBarBehavior.floating,
                     ),
@@ -511,7 +511,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 if (ctx.mounted) {
                   ScaffoldMessenger.of(ctx).showSnackBar(
                     const SnackBar(
-                      content: Text('Le code PIN doit comporter exactement 6 chiffres.'),
+                      content: Text('The PIN code must be exactly 6 digits.'),
                       backgroundColor: Colors.red,
                       behavior: SnackBarBehavior.floating,
                     ),
@@ -519,7 +519,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 }
               }
             },
-            child: const Text('Enregistrer',
+            child: const Text('Save',
                 style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],

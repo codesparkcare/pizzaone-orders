@@ -8,22 +8,20 @@ class SettingsProvider with ChangeNotifier {
   static const String _keySoundEnabled = 'setting_sound_enabled';
   static const String _keyRefreshInterval = 'setting_refresh_interval';
   static const String _keySelectedShop = 'setting_selected_shop_id';
-  static const String _keyLanguage = 'setting_language';
 
   String _baseUrl = ApiConstants.defaultBaseUrl;
   bool _soundEnabled = true;
   int _autoRefreshSeconds = 15;
   int? _selectedShopId;
-  String _language = 'en';
   bool _isInitialized = false;
 
   String get baseUrl => _baseUrl;
   bool get soundEnabled => _soundEnabled;
   int get autoRefreshSeconds => _autoRefreshSeconds;
   int? get selectedShopId => _selectedShopId;
-  String get language => _language;
-  bool get isEnglish => _language == 'en';
-  bool get isFrench => _language == 'fr';
+  String get language => 'en';
+  bool get isEnglish => true;
+  bool get isFrench => false;
   bool get isInitialized => _isInitialized;
 
   bool get isLiveServer => _baseUrl.contains('pizzaonerestaurant.com');
@@ -36,7 +34,6 @@ class SettingsProvider with ChangeNotifier {
       _soundEnabled = prefs.getBool(_keySoundEnabled) ?? true;
       _autoRefreshSeconds = prefs.getInt(_keyRefreshInterval) ?? 15;
       _selectedShopId = prefs.getInt(_keySelectedShop);
-      _language = prefs.getString(_keyLanguage) ?? 'en';
 
       AudioAlertService().setMuted(!_soundEnabled);
       _isInitialized = true;
@@ -91,14 +88,10 @@ class SettingsProvider with ChangeNotifier {
   }
 
   Future<void> setLanguage(String lang) async {
-    if (lang != 'en' && lang != 'fr') return;
-    _language = lang;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyLanguage, _language);
-    notifyListeners();
+    // English only mode
   }
 
   Future<void> toggleLanguage() async {
-    await setLanguage(_language == 'en' ? 'fr' : 'en');
+    // English only mode
   }
 }

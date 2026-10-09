@@ -5,7 +5,6 @@ import '../core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/order_provider.dart';
-import '../widgets/server_indicator_chip.dart';
 import 'dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -129,12 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Top Server Indicator
-                    const Align(
-                      alignment: Alignment.topRight,
-                      child: ServerIndicatorChip(),
-                    ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
 
                     // Logo Emblem
                     Container(
@@ -180,7 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 4),
                     const Text(
-                      'Portail de Réception des Commandes',
+                      'Order Reception Portal',
                       style: TextStyle(
                         fontSize: 13,
                         color: AppTheme.textSecondary,
@@ -237,7 +231,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Column(
                         children: [
                           const Text(
-                            'Code PIN d\'accès',
+                            'PIN Access Code',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
@@ -246,7 +240,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 6),
                           const Text(
-                            'Saisissez le code PIN à 6 chiffres',
+                            'Enter 6-digit PIN code',
                             style: TextStyle(
                               fontSize: 12,
                               color: AppTheme.textSecondary,
@@ -358,7 +352,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                'Code PIN : 812282',
+                                'PIN Code: 812282',
                                 style: TextStyle(
                                   color:
                                       AppTheme.textMuted.withValues(alpha: 0.8),
@@ -385,7 +379,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Cible : ${settings.baseUrl}',
+                          'Server: ${settings.baseUrl}',
                           style: const TextStyle(
                             color: AppTheme.textMuted,
                             fontSize: 11,

@@ -53,7 +53,7 @@ class AuthProvider with ChangeNotifier {
     final savedPin = prefs.getString(_keyPinCode) ?? defaultPin;
 
     if (pin != savedPin && pin != defaultPin) {
-      _errorMessage = 'Code PIN incorrect';
+      _errorMessage = 'Incorrect PIN code';
       notifyListeners();
       return false;
     }
