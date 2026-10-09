@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
@@ -15,32 +16,68 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _usernameController = TextEditingController(text: 'admin');
-  final _passwordController = TextEditingController(text: 'admin123');
-  bool _obscurePassword = true;
+  String _pin = '';
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    // Auto-focus to capture desktop/hardware keyboard input immediately
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focusNode.requestFocus();
+    });
+  }
 
   @override
   void dispose() {
-    _usernameController.dispose();
-    _passwordController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) return;
+  void _onDigitPressed(String digit) {
+    if (_pin.length < 4) {
+      HapticFeedback.lightImpact();
+      setState(() {
+        _pin += digit;
+      });
+      if (_pin.length == 4) {
+        _submitPin(_pin);
+      }
+    }
+  }
 
+  void _onDeletePressed() {
+    if (_pin.isNotEmpty) {
+      HapticFeedback.selectionClick();
+      setState(() {
+        _pin = _pin.substring(0, _pin.length - 1);
+      });
+    }
+  }
+
+  void _onClearPressed() {
+    if (_pin.isNotEmpty) {
+      HapticFeedback.mediumImpact();
+      setState(() {
+        _pin = '';
+      });
+    }
+  }
+
+  Future<void> _submitPin(String pinToVerify) async {
     final auth = context.read<AuthProvider>();
     final settings = context.read<SettingsProvider>();
     final order = context.read<OrderProvider>();
 
-    final success = await auth.login(
-      username: _usernameController.text.trim(),
-      password: _passwordController.text.trim(),
+    final success = await auth.loginWithPin(
+      pin: pinToVerify,
       baseUrl: settings.baseUrl,
     );
 
-    if (success && mounted) {
+    if (!mounted) return;
+
+    if (success) {
+      HapticFeedback.mediumImpact();
       order.startAutoPolling(
         baseUrl: settings.baseUrl,
         token: auth.currentUser?.token,
@@ -51,6 +88,25 @@ class _LoginScreenState extends State<LoginScreen> {
         context,
         MaterialPageRoute(builder: (_) => const DashboardScreen()),
       );
+    } else {
+      HapticFeedback.heavyImpact();
+      setState(() {
+        _pin = '';
+      });
+    }
+  }
+
+  void _handleKeyEvent(KeyEvent event) {
+    if (event is KeyDownEvent) {
+      final keyLabel = event.logicalKey.keyLabel;
+      if (RegExp(r'^[0-9]$').hasMatch(keyLabel)) {
+        _onDigitPressed(keyLabel);
+      } else if (event.logicalKey == LogicalKeyboardKey.backspace ||
+          event.logicalKey == LogicalKeyboardKey.delete) {
+        _onDeletePressed();
+      } else if (event.logicalKey == LogicalKeyboardKey.escape) {
+        _onClearPressed();
+      }
     }
   }
 
@@ -61,14 +117,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: AppTheme.background,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Form(
-                key: _formKey,
+      body: KeyboardListener(
+        focusNode: _focusNode,
+        onKeyEvent: _handleKeyEvent,
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 380),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -77,171 +134,262 @@ class _LoginScreenState extends State<LoginScreen> {
                       alignment: Alignment.topRight,
                       child: ServerIndicatorChip(),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
 
                     // Logo Emblem
                     Container(
-                      width: 100,
-                      height: 100,
+                      width: 90,
+                      height: 90,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(22),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.primary.withValues(alpha: 0.3),
+                            color: AppTheme.primary.withValues(alpha: 0.35),
                             blurRadius: 24,
                             spreadRadius: 1,
                           )
                         ],
                       ),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(22),
                         child: Image.asset(
                           'assets/images/logo.png',
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) => Container(
                             color: AppTheme.surfaceElevated,
-                            child: const Icon(Icons.local_pizza_rounded, size: 50, color: AppTheme.primary),
+                            child: const Icon(
+                              Icons.local_pizza_rounded,
+                              size: 45,
+                              color: AppTheme.primary,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
 
                     // Titles
                     const Text(
                       'Pizza One Restaurant',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 22,
                         fontWeight: FontWeight.w900,
                         color: AppTheme.textPrimary,
                         letterSpacing: -0.5,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     const Text(
                       'Portail de Réception des Commandes',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         color: AppTheme.textSecondary,
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
 
                     // Error Message Banner
                     if (auth.errorMessage != null) ...[
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
                         decoration: BoxDecoration(
                           color: AppTheme.statusCancelled.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppTheme.statusCancelled.withValues(alpha: 0.4)),
+                          border: Border.all(
+                            color: AppTheme.statusCancelled.withValues(alpha: 0.4),
+                          ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.error_outline_rounded, color: AppTheme.statusCancelled, size: 20),
-                            const SizedBox(width: 12),
+                            const Icon(
+                              Icons.error_outline_rounded,
+                              color: AppTheme.statusCancelled,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Text(
                                 auth.errorMessage!,
-                                style: const TextStyle(color: Colors.white, fontSize: 13),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                     ],
 
-                    // Login Card
+                    // PIN Code Card
                     Container(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 24),
                       decoration: BoxDecoration(
                         color: AppTheme.surface,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(24),
                         border: Border.all(color: AppTheme.surfaceBorder),
                         boxShadow: AppTheme.cardShadow,
                       ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            'Identifiant Staff / Admin',
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
-                          ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _usernameController,
-                            style: const TextStyle(color: AppTheme.textPrimary),
-                            decoration: const InputDecoration(
-                              hintText: 'admin ou staff',
-                              prefixIcon: Icon(Icons.person_rounded, color: AppTheme.textMuted),
+                            'Code PIN d\'accès',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textPrimary,
                             ),
-                            validator: (v) => (v == null || v.trim().isEmpty) ? 'Veuillez saisir votre identifiant' : null,
                           ),
-                          const SizedBox(height: 20),
-
+                          const SizedBox(height: 6),
                           const Text(
-                            'Mot de passe',
-                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.textSecondary),
-                          ),
-                          const SizedBox(height: 8),
-                          TextFormField(
-                            controller: _passwordController,
-                            obscureText: _obscurePassword,
-                            style: const TextStyle(color: AppTheme.textPrimary),
-                            decoration: InputDecoration(
-                              hintText: '••••••••',
-                              prefixIcon: const Icon(Icons.lock_rounded, color: AppTheme.textMuted),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  _obscurePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                                  color: AppTheme.textMuted,
-                                ),
-                                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                              ),
+                            'Saisissez le code PIN à 4 chiffres',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textSecondary,
                             ),
-                            validator: (v) => (v == null || v.trim().isEmpty) ? 'Veuillez saisir votre mot de passe' : null,
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 22),
 
-                          // Submit Button
-                          SizedBox(
-                            width: double.infinity,
-                            height: 52,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primary,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          // 4 PIN Dots / Spinner
+                          if (auth.isLoading)
+                            const SizedBox(
+                              height: 40,
+                              child: Center(
+                                child: SizedBox(
+                                  width: 28,
+                                  height: 28,
+                                  child: CircularProgressIndicator(
+                                    color: AppTheme.primary,
+                                    strokeWidth: 3,
+                                  ),
+                                ),
                               ),
-                              onPressed: auth.isLoading ? null : _handleLogin,
-                              child: auth.isLoading
-                                  ? const SizedBox(
-                                      width: 22,
-                                      height: 22,
-                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-                                    )
-                                  : const Text(
-                                      'SE CONNECTER',
-                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+                            )
+                          else
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(4, (index) {
+                                final isFilled = index < _pin.length;
+                                return AnimatedContainer(
+                                  duration: const Duration(milliseconds: 180),
+                                  curve: Curves.easeOutBack,
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 10),
+                                  width: isFilled ? 20 : 16,
+                                  height: isFilled ? 20 : 16,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: isFilled
+                                        ? AppTheme.primary
+                                        : Colors.transparent,
+                                    border: Border.all(
+                                      color: isFilled
+                                          ? AppTheme.primary
+                                          : AppTheme.surfaceBorder,
+                                      width: 2.2,
                                     ),
+                                    boxShadow: isFilled
+                                        ? [
+                                            BoxShadow(
+                                              color: AppTheme.primary
+                                                  .withValues(alpha: 0.5),
+                                              blurRadius: 10,
+                                              spreadRadius: 2,
+                                            )
+                                          ]
+                                        : null,
+                                  ),
+                                );
+                              }),
                             ),
+
+                          const SizedBox(height: 28),
+
+                          // Keypad (1 to 9, C, 0, Backspace)
+                          Column(
+                            children: [
+                              _buildKeypadRow(['1', '2', '3'], auth.isLoading),
+                              const SizedBox(height: 12),
+                              _buildKeypadRow(['4', '5', '6'], auth.isLoading),
+                              const SizedBox(height: 12),
+                              _buildKeypadRow(['7', '8', '9'], auth.isLoading),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  // Clear Button
+                                  _buildActionKey(
+                                    label: 'C',
+                                    icon: null,
+                                    onTap: auth.isLoading ? null : _onClearPressed,
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                  // 0 Button
+                                  _buildDigitKey('0', auth.isLoading),
+                                  // Backspace Button
+                                  _buildActionKey(
+                                    label: null,
+                                    icon: Icons.backspace_outlined,
+                                    onTap: auth.isLoading
+                                        ? null
+                                        : _onDeletePressed,
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 18),
+
+                          // Default PIN info hint
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.lock_outline_rounded,
+                                size: 13,
+                                color: AppTheme.textMuted.withValues(alpha: 0.7),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Code PIN par défaut : 1234',
+                                style: TextStyle(
+                                  color:
+                                      AppTheme.textMuted.withValues(alpha: 0.8),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
+
                     // Current Server Footer
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.dns_rounded, size: 14, color: AppTheme.textMuted),
+                        const Icon(
+                          Icons.dns_rounded,
+                          size: 13,
+                          color: AppTheme.textMuted,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           'Cible : ${settings.baseUrl}',
-                          style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                          style: const TextStyle(
+                            color: AppTheme.textMuted,
+                            fontSize: 11,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
@@ -250,6 +398,73 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKeypadRow(List<String> digits, bool isLoading) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: digits.map((d) => _buildDigitKey(d, isLoading)).toList(),
+    );
+  }
+
+  Widget _buildDigitKey(String digit, bool isLoading) {
+    return SizedBox(
+      width: 68,
+      height: 60,
+      child: Material(
+        color: AppTheme.surfaceElevated,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          splashColor: AppTheme.primary.withValues(alpha: 0.3),
+          highlightColor: AppTheme.primary.withValues(alpha: 0.15),
+          onTap: isLoading ? null : () => _onDigitPressed(digit),
+          child: Center(
+            child: Text(
+              digit,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionKey({
+    String? label,
+    IconData? icon,
+    VoidCallback? onTap,
+    required Color color,
+  }) {
+    return SizedBox(
+      width: 68,
+      height: 60,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          splashColor: AppTheme.primary.withValues(alpha: 0.2),
+          onTap: onTap,
+          child: Center(
+            child: icon != null
+                ? Icon(icon, color: color, size: 22)
+                : Text(
+                    label ?? '',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ),
+                  ),
           ),
         ),
       ),

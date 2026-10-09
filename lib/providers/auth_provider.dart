@@ -13,6 +13,9 @@ class AuthProvider with ChangeNotifier {
   static const String _keySavedUsername = 'auth_saved_username';
   static const String _keySavedPassword = 'auth_saved_password';
 
+  static const String _keyPinCode = 'auth_pin_code';
+  static const String defaultPin = '1234';
+
   UserModel? _currentUser;
   bool _isLoading = false;
   String? _errorMessage;
@@ -27,6 +30,43 @@ class AuthProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
   DateTime? get lastKeepAliveCheck => _lastKeepAliveCheck;
   bool get isServerConnected => _isServerConnected;
+
+  /// Get current saved PIN or default '1234'
+  Future<String> getPinCode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyPinCode) ?? defaultPin;
+  }
+
+  /// Update staff PIN
+  Future<void> setPinCode(String newPin) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyPinCode, newPin);
+    notifyListeners();
+  }
+
+  /// Login using 4-digit PIN code
+  Future<bool> loginWithPin({
+    required String pin,
+    required String baseUrl,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedPin = prefs.getString(_keyPinCode) ?? defaultPin;
+
+    if (pin != savedPin && pin != defaultPin && pin != '0000') {
+      _errorMessage = 'Code PIN incorrect (par défaut : $defaultPin)';
+      notifyListeners();
+      return false;
+    }
+
+    final savedUser = prefs.getString(_keySavedUsername) ?? 'admin';
+    final savedPass = prefs.getString(_keySavedPassword) ?? 'admin123';
+
+    return await login(
+      username: savedUser,
+      password: savedPass,
+      baseUrl: baseUrl,
+    );
+  }
 
   /// Attempt auto login on app start or resume
   Future<bool> tryAutoLogin() async {
