@@ -12,6 +12,10 @@ class AudioAlertService {
   bool _isMuted = false;
   Timer? _loopTimer;
 
+  // On web/iOS, audio requires a user interaction to unlock.
+  // This flag tracks whether the audio context has been unlocked.
+  bool _isWebAudioUnlocked = false;
+
   bool get isPlaying => _isPlaying;
   bool get isMuted => _isMuted;
 
@@ -19,6 +23,11 @@ class AudioAlertService {
     try {
       _player = AudioPlayer();
       _player?.setReleaseMode(ReleaseMode.stop);
+
+      // On Web, configure low latency mode for faster response
+      if (kIsWeb) {
+        _player?.setPlayerMode(PlayerMode.lowLatency);
+      }
     } catch (e) {
       debugPrint('[AudioAlertService] init error: $e');
     }
@@ -31,12 +40,26 @@ class AudioAlertService {
     }
   }
 
+  /// Called from web JavaScript after first user interaction to unlock audio.
+  /// This must be called before startRingtone() will work on iOS Safari.
+  void markWebAudioUnlocked() {
+    _isWebAudioUnlocked = true;
+    debugPrint('[AudioAlertService] iOS/Web audio context unlocked ✅');
+  }
+
   /// Start repeating order ringtone (rings every 3.5s until stopped)
   Future<void> startRingtone() async {
     if (_isMuted || _isPlaying) return;
 
+    // On web/iOS, skip if audio context hasn't been unlocked yet
+    // (audio unlock happens on first user touch via index.html JS)
+    if (kIsWeb && !_isWebAudioUnlocked) {
+      debugPrint('[AudioAlertService] iOS Web: audio not yet unlocked by user interaction, skipping chime');
+      return;
+    }
+
     _isPlaying = true;
-    _playChime();
+    await _playChime();
 
     _loopTimer?.cancel();
     _loopTimer = Timer.periodic(const Duration(milliseconds: 3500), (timer) {
@@ -62,6 +85,10 @@ class AudioAlertService {
 
   /// Play a single chime (for preview or manual test)
   Future<void> playSingleChime() async {
+    if (kIsWeb && !_isWebAudioUnlocked) {
+      debugPrint('[AudioAlertService] Web: cannot play until user interacts with page first');
+      return;
+    }
     await _playChime();
   }
 

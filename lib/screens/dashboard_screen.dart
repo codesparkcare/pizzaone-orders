@@ -1,7 +1,10 @@
 import "package:flutter/material.dart";
+import "package:flutter/foundation.dart" show kIsWeb;
 import "package:provider/provider.dart";
 import "../core/localization/app_strings.dart";
 import "../core/theme/app_theme.dart";
+import "../core/utils/audio_alert_service.dart";
+import "../core/utils/wake_lock_service.dart";
 import "../providers/auth_provider.dart";
 import "../providers/settings_provider.dart";
 import "../providers/order_provider.dart";
@@ -22,13 +25,26 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   final _searchController = TextEditingController();
+  final _wakeLock = WakeLockService();
+  bool _wakeLockEnabled = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _startPolling();
+      _setupWebVisibilityRefresh();
     });
+  }
+
+  /// On iOS PWA, when user returns to the app after it was in background,
+  /// trigger an immediate refresh so orders are up-to-date.
+  void _setupWebVisibilityRefresh() {
+    if (!kIsWeb) return;
+    // Mark audio as unlocked on first user interaction (iOS Safari requirement)
+    // This is handled in index.html JS, but we also mark it in Dart:
+    // AudioAlertService will check this before playing
+    AudioAlertService().markWebAudioUnlocked();
   }
 
   void _startPolling() {
@@ -163,6 +179,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
           const SizedBox(width: 2),
+
+          // Screen Wake Lock (iOS PWA Kitchen Mode - keeps screen on)
+          if (kIsWeb)
+            IconButton(
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              padding: EdgeInsets.zero,
+              icon: Icon(
+                _wakeLockEnabled ? Icons.brightness_high_rounded : Icons.brightness_low_rounded,
+                color: _wakeLockEnabled ? Colors.amberAccent : AppTheme.textMuted,
+                size: 20,
+              ),
+              tooltip: _wakeLockEnabled ? "Screen Stay-On: ON" : "Screen Stay-On: OFF",
+              onPressed: () async {
+                // Capture messenger before async gap (BuildContext safety)
+                final messenger = ScaffoldMessenger.of(context);
+                final enabled = await _wakeLock.toggle();
+                if (mounted) setState(() => _wakeLockEnabled = enabled);
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(enabled
+                        ? '🔆 Screen will stay on (Kitchen Mode)'
+                        : '😴 Screen auto-sleep restored'),
+                    backgroundColor: enabled ? Colors.amber.shade800 : AppTheme.surfaceElevated,
+                    duration: const Duration(seconds: 2),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+            ),
 
           // Mute / Sound Toggle
           IconButton(

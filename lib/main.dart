@@ -15,9 +15,12 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize sound player service
+  // On Web/iOS PWA: audio requires user interaction first (handled in dashboard init)
   AudioAlertService().init();
 
-  // Initialize local notifications and Firebase Messaging safely
+  // Initialize Firebase Messaging + local notifications
+  // Web path: uses VAPID key, no flutter_local_notifications
+  // Native path: uses flutter_local_notifications + FCM
   await NotificationService().init(
     onOrderNotificationTapped: (orderIdStr) {
       final orderId = int.tryParse(orderIdStr);
