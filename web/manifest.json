@@ -10,7 +10,26 @@
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "id": "/apporder/",
-    "categories": ["food", "business", "productivity"],
+    "categories": [
+        "food",
+        "business",
+        "productivity"
+    ],
+    "screenshots": [],
+    "shortcuts": [
+        {
+            "name": "New Orders",
+            "short_name": "Orders",
+            "description": "View pending orders",
+            "url": "/apporder/",
+            "icons": [
+                {
+                    "src": "icons/Icon-192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        }
+    ],
     "icons": [
         {
             "src": "icons/Icon-192.png",
@@ -35,16 +54,6 @@
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "maskable"
-        }
-    ],
-    "screenshots": [],
-    "shortcuts": [
-        {
-            "name": "New Orders",
-            "short_name": "Orders",
-            "description": "View pending orders",
-            "url": "/apporder/",
-            "icons": [{"src": "icons/Icon-192.png", "sizes": "192x192"}]
         }
     ]
 }
