@@ -121,65 +121,180 @@
       to { transform: rotate(360deg); }
     }
 
-    /* iOS PWA Install Banner (shown only in Safari, not standalone) */
-    #ios-install-banner {
+    /* Universal PWA Install Modal Overlay */
+    #pwa-install-overlay {
       display: none;
       position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(30, 30, 30, 0.95);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 107, 43, 0.4);
-      border-radius: 16px;
-      padding: 14px 18px;
-      z-index: 10000;
-      max-width: 340px;
-      width: calc(100% - 40px);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-      animation: slideUp 0.4s ease;
-    }
-    @keyframes slideUp {
-      from { transform: translateX(-50%) translateY(100px); opacity: 0; }
-      to { transform: translateX(-50%) translateY(0); opacity: 1; }
-    }
-    #ios-install-banner .banner-inner {
-      display: flex;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 10001;
       align-items: center;
-      gap: 12px;
+      justify-content: center;
+      padding: 16px;
+      animation: pwaFadeIn 0.25s ease;
     }
-    #ios-install-banner .banner-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #FF6B2B, #FF8C42);
+    @keyframes pwaFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    #pwa-install-modal {
+      position: relative;
+      background: #16181F;
+      border: 1px solid rgba(255, 107, 43, 0.45);
+      border-radius: 24px;
+      padding: 24px 22px;
+      max-width: 380px;
+      width: 100%;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.85), 0 0 35px rgba(255, 107, 43, 0.25);
+      animation: pwaPopIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #FFFFFF;
+    }
+    @keyframes pwaPopIn {
+      from { transform: scale(0.85) translateY(20px); opacity: 0; }
+      to { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    #pwa-modal-close-btn {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: rgba(255, 255, 255, 0.7);
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      font-size: 14px;
+      cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
+      transition: background 0.2s;
+    }
+    #pwa-modal-close-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+      color: #FFFFFF;
+    }
+    .pwa-modal-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .pwa-modal-logo {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(255, 107, 43, 0.45);
+      flex-shrink: 0;
+      background: #000;
+    }
+    .pwa-modal-title-group h3 {
+      font-size: 18px;
+      font-weight: 800;
+      color: #FFFFFF;
+      margin: 0 0 3px 0;
+      letter-spacing: -0.3px;
+    }
+    .pwa-modal-title-group p {
+      font-size: 12px;
+      color: #94A3B8;
+      margin: 0;
+    }
+    .pwa-features-list {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 18px 0;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+    .pwa-features-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: #CBD5E1;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .pwa-features-list li:last-child {
+      border-bottom: none;
+    }
+    .feat-icon {
+      font-size: 15px;
       flex-shrink: 0;
     }
-    #ios-install-banner .banner-text { flex: 1; }
-    #ios-install-banner .banner-text strong {
-      display: block;
+    .pwa-btn-primary {
+      width: 100%;
+      height: 48px;
+      background: linear-gradient(135deg, #FF6B2B 0%, #FF8A00 100%);
       color: #FFFFFF;
+      border: none;
+      border-radius: 14px;
       font-size: 14px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-weight: 700;
-      margin-bottom: 3px;
-    }
-    #ios-install-banner .banner-text span {
-      color: rgba(255,255,255,0.65);
-      font-size: 12px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      line-height: 1.4;
-    }
-    #ios-install-banner .banner-close {
-      color: rgba(255,255,255,0.4);
-      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
       cursor: pointer;
-      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 6px 20px rgba(255, 107, 43, 0.45);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .pwa-btn-primary:active {
+      transform: scale(0.98);
+    }
+    .pwa-btn-secondary {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: #94A3B8;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 12px 0 4px 0;
+      cursor: pointer;
+      text-align: center;
+      margin-top: 6px;
+    }
+    .pwa-btn-secondary:hover {
+      color: #CBD5E1;
+    }
+    .pwa-ios-step-box {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 107, 43, 0.25);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+    }
+    .ios-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: #E2E8F0;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .ios-step:last-child {
+      border-bottom: none;
+    }
+    .step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #FF6B2B;
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
     }
     .share-icon {
@@ -187,7 +302,7 @@
       width: 16px;
       height: 16px;
       vertical-align: middle;
-      fill: rgba(255,255,255,0.65);
+      fill: none;
     }
   </style>
 </head>
@@ -197,25 +312,74 @@
   <div id="pwa-loading">
     <div class="pwa-logo">🍕</div>
     <div class="pwa-title">PIZZA ONE</div>
-    <div class="pwa-subtitle">Chargement en cours...</div>
+    <div class="pwa-subtitle">Loading...</div>
     <div class="pwa-spinner"></div>
   </div>
 
-  <!-- iOS Install Banner (Safari only, not shown in standalone mode) -->
-  <div id="ios-install-banner" role="dialog" aria-label="Install Pizza One App">
-    <div class="banner-inner">
-      <div class="banner-icon">🍕</div>
-      <div class="banner-text">
-        <strong>Installer Pizza One</strong>
-        <span>
-          Appuyez sur
-          <svg class="share-icon" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 2L9 8M15 2L21 8M15 2V20M7 14H3v14h24V14h-4" stroke="rgba(255,255,255,0.65)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-          </svg>
-          puis <strong style="color:#FF6B2B">"Sur l'écran d'accueil"</strong>
-        </span>
+  <!-- Universal PWA Install Popup Modal (for Android, Chrome, Edge, and iOS) -->
+  <div id="pwa-install-overlay" role="dialog" aria-modal="true" aria-label="Install Pizza One App">
+    <div id="pwa-install-modal">
+      <button id="pwa-modal-close-btn" aria-label="Close">✕</button>
+
+      <div class="pwa-modal-header">
+        <div class="pwa-modal-logo">
+          <img src="icons/Icon-192.png" alt="Pizza One" width="56" height="56" style="border-radius:14px; display:block;">
+        </div>
+        <div class="pwa-modal-title-group">
+          <h3>Install Pizza One</h3>
+          <p>Order Management App</p>
+        </div>
       </div>
-      <div class="banner-close" id="banner-close-btn" role="button" aria-label="Dismiss">✕</div>
+
+      <div class="pwa-modal-body">
+        <ul class="pwa-features-list">
+          <li>
+            <span class="feat-icon">⚡</span>
+            <span><strong>Instant Access:</strong> Fast 1-tap launch from home screen</span>
+          </li>
+          <li>
+            <span class="feat-icon">🔔</span>
+            <span><strong>Live Order Alerts:</strong> Sound alarms and notifications</span>
+          </li>
+          <li>
+            <span class="feat-icon">📱</span>
+            <span><strong>Kitchen Mode:</strong> Full-screen immersive display</span>
+          </li>
+        </ul>
+
+        <!-- Native Install Button (Chrome / Edge / Android / Desktop) -->
+        <div id="pwa-native-install-section" style="display:none;">
+          <button id="pwa-install-btn" class="pwa-btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            INSTALL APP NOW
+          </button>
+        </div>
+
+        <!-- iOS Safari Step-by-Step Instructions (iPhone / iPad) -->
+        <div id="pwa-ios-instructions-section" style="display:none;">
+          <div class="pwa-ios-step-box">
+            <div class="ios-step">
+              <span class="step-num">1</span>
+              <span>Tap the <strong>Share</strong> button <svg class="share-icon" viewBox="0 0 30 30" width="16" height="16"><path d="M15 2L9 8M15 2L21 8M15 2V20M7 14H3v14h24V14h-4" stroke="#FF6B2B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg> in Safari toolbar</span>
+            </div>
+            <div class="ios-step">
+              <span class="step-num">2</span>
+              <span>Scroll down and tap <strong>"Add to Home Screen" ➕</strong></span>
+            </div>
+            <div class="ios-step">
+              <span class="step-num">3</span>
+              <span>Tap <strong>"Add"</strong> in top-right corner</span>
+            </div>
+          </div>
+          <button id="pwa-ios-gotit-btn" class="pwa-btn-primary">GOT IT</button>
+        </div>
+
+        <button id="pwa-later-btn" class="pwa-btn-secondary">Continue in browser</button>
+      </div>
     </div>
   </div>
 
@@ -227,35 +391,113 @@
 
   <script>
     // ================================================================
-    //  PWA & iOS Safari Utilities
+    //  Universal PWA Install Prompt System
     // ================================================================
+    var deferredInstallPrompt = null;
+    var isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                       (window.navigator.standalone === true) ||
+                       document.referrer.includes('android-app://');
 
-    // 1. Detect if running in iOS standalone (installed PWA) mode
-    var isIosStandalone = (window.navigator.standalone === true);
-    // Detect iOS Safari browser (not standalone)
-    var isIosSafari = /iP(ad|hone|od)/.test(navigator.userAgent) &&
-                      /WebKit/.test(navigator.userAgent) &&
-                      !window.MSStream &&
-                      !isIosStandalone;
+    // Detect iOS (iPhone, iPad, iPod, iPadOS Safari)
+    var isIOS = (/iP(ad|hone|od)/.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) &&
+                !window.MSStream;
 
-    // 2. Show iOS Install Banner (only in Safari browser, not after install)
-    var bannerDismissed = sessionStorage.getItem('pwa_banner_dismissed');
-    if (isIosSafari && !bannerDismissed) {
-      // Delay 3 seconds to show after initial content loads
-      setTimeout(function() {
-        var banner = document.getElementById('ios-install-banner');
-        if (banner) banner.style.display = 'block';
-      }, 3000);
+    function showPwaInstallModal() {
+      if (isStandalone) {
+        console.log('[PWA] Already running in standalone mode, skipping install prompt');
+        return;
+      }
+      var overlay = document.getElementById('pwa-install-overlay');
+      var nativeSec = document.getElementById('pwa-native-install-section');
+      var iosSec = document.getElementById('pwa-ios-instructions-section');
+
+      if (!overlay) return;
+
+      if (isIOS) {
+        if (iosSec) iosSec.style.display = 'block';
+        if (nativeSec) nativeSec.style.display = 'none';
+      } else {
+        if (nativeSec) nativeSec.style.display = 'block';
+        if (iosSec) iosSec.style.display = 'none';
+      }
+
+      overlay.style.display = 'flex';
     }
 
-    // Close banner on dismiss button
-    var closeBtn = document.getElementById('banner-close-btn');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', function() {
-        var banner = document.getElementById('ios-install-banner');
-        if (banner) banner.style.display = 'none';
-        sessionStorage.setItem('pwa_banner_dismissed', '1');
-      });
+    function hidePwaInstallModal() {
+      var overlay = document.getElementById('pwa-install-overlay');
+      if (overlay) overlay.style.display = 'none';
+      sessionStorage.setItem('pwa_install_prompt_dismissed', '1');
+    }
+
+    // Expose globally for Flutter web calls
+    window.showPwaInstallModal = showPwaInstallModal;
+
+    // 1. Listen for beforeinstallprompt (Chrome / Android / Chromium / Edge)
+    window.addEventListener('beforeinstallprompt', function(e) {
+      console.log('[PWA] beforeinstallprompt event captured ✅');
+      e.preventDefault();
+      deferredInstallPrompt = e;
+
+      // Automatically show modal prompt
+      if (!isStandalone) {
+        setTimeout(function() {
+          showPwaInstallModal();
+        }, 1200);
+      }
+    });
+
+    // 2. Wire buttons once DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      var installBtn = document.getElementById('pwa-install-btn');
+      if (installBtn) {
+        installBtn.addEventListener('click', async function() {
+          if (deferredInstallPrompt) {
+            deferredInstallPrompt.prompt();
+            try {
+              var choice = await deferredInstallPrompt.userChoice;
+              console.log('[PWA] User choice:', choice.outcome);
+              if (choice.outcome === 'accepted') {
+                console.log('[PWA] User accepted installation! 🎉');
+              }
+            } catch(err) {
+              console.warn('[PWA] Prompt error:', err);
+            }
+            deferredInstallPrompt = null;
+            hidePwaInstallModal();
+          } else {
+            // If beforeinstallprompt hasn't fired yet on desktop Chrome:
+            alert('To install Pizza One, click the Install icon (⊕) in your browser address bar or menu.');
+            hidePwaInstallModal();
+          }
+        });
+      }
+
+      var closeBtn = document.getElementById('pwa-modal-close-btn');
+      if (closeBtn) closeBtn.addEventListener('click', hidePwaInstallModal);
+
+      var laterBtn = document.getElementById('pwa-later-btn');
+      if (laterBtn) laterBtn.addEventListener('click', hidePwaInstallModal);
+
+      var gotItBtn = document.getElementById('pwa-ios-gotit-btn');
+      if (gotItBtn) gotItBtn.addEventListener('click', hidePwaInstallModal);
+    });
+
+    // 3. When app is installed, hide modal immediately
+    window.addEventListener('appinstalled', function() {
+      console.log('[PWA] Pizza One app installed successfully! 🎉');
+      hidePwaInstallModal();
+    });
+
+    // 4. Fallback: If not in standalone mode, auto-show popup after 2 seconds
+    if (!isStandalone) {
+      setTimeout(function() {
+        var dismissed = sessionStorage.getItem('pwa_install_prompt_dismissed');
+        if (!dismissed) {
+          showPwaInstallModal();
+        }
+      }, 2000);
     }
 
     // 3. iOS Audio Unlock: Safari blocks audio until user interaction.
