@@ -1,15 +1,15 @@
 {
     "name": "Pizza One - Orders",
     "short_name": "Pizza One",
-    "start_url": "/apporder/",
-    "scope": "/apporder/",
+    "start_url": "/apporders/",
+    "scope": "/apporders/",
     "display": "standalone",
     "background_color": "#0A0A0F",
     "theme_color": "#FF6B2B",
     "description": "Pizza One - Real-time Order Management Dashboard",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
-    "id": "/apporder/",
+    "id": "/apporders/",
     "categories": [
         "food",
         "business",
@@ -21,7 +21,7 @@
             "name": "New Orders",
             "short_name": "Orders",
             "description": "View pending orders",
-            "url": "/apporder/",
+            "url": "/apporders/",
             "icons": [
                 {
                     "src": "icons/Icon-192.png",

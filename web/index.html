@@ -3,7 +3,7 @@
 <head>
   <!--
     Pizza One - PWA Configuration for iOS (Safari) and Android Chrome
-    Deployed at: https://pizzaonerestaurant.com/apporder/
+    Deployed at: https://pizzaonerestaurant.com/apporders/
   -->
   <base href="$FLUTTER_BASE_HREF">
 
@@ -26,15 +26,15 @@
   <meta name="apple-mobile-web-app-title" content="Pizza One">
 
   <!-- Apple Touch Icons (REQUIRED for proper icon on iOS Home Screen) -->
-  <link rel="apple-touch-icon" href="/apporder/icons/Icon-180.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="/apporder/icons/Icon-180.png">
-  <link rel="apple-touch-icon" sizes="152x152" href="/apporder/icons/Icon-192.png">
-  <link rel="apple-touch-icon" sizes="167x167" href="/apporder/icons/Icon-192.png">
-  <link rel="apple-touch-icon" sizes="192x192" href="/apporder/icons/Icon-192.png">
-  <link rel="apple-touch-icon" sizes="512x512" href="/apporder/icons/Icon-512.png">
+  <link rel="apple-touch-icon" href="/apporders/icons/Icon-180.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apporders/icons/Icon-180.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="/apporders/icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="/apporders/icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="/apporders/icons/Icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="/apporders/icons/Icon-512.png">
 
   <!-- Apple Splash Screens (optional but improves launch experience) -->
-  <link rel="apple-touch-startup-image" href="/apporder/icons/Icon-512.png">
+  <link rel="apple-touch-startup-image" href="/apporders/icons/Icon-512.png">
 
   <!-- ============================================================ -->
   <!--  Android / Chrome PWA Configuration                          -->
@@ -547,7 +547,7 @@
 
     // 6. Register Firebase Messaging Service Worker for Web Push
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('firebase-messaging-sw.js', { scope: '/apporder/' })
+      navigator.serviceWorker.register('firebase-messaging-sw.js', { scope: '/apporders/' })
         .then(function(registration) {
           console.log('[PizzaOne PWA] Firebase SW registered:', registration.scope);
         })

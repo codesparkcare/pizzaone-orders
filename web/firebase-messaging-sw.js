@@ -10,7 +10,7 @@
  * IMPORTANT for iOS:
  *   - This ONLY works when the app has been added to the Home Screen
  *   - iOS 16.4+ is required for Web Push
- *   - The service worker scope MUST match: /apporder/
+ *   - The service worker scope MUST match: /apporders/
  */
 
 // ================================================================
@@ -38,10 +38,10 @@ const FIREBASE_CONFIG = {
 //  App Constants
 // ================================================================
 const APP_NAME = 'Pizza One';
-const APP_URL = 'https://pizzaonerestaurant.com/apporder/';
-const CACHE_NAME = 'pizzaone-pwa-v8';
-const NOTIFICATION_ICON = '/apporder/icons/Icon-192.png';
-const NOTIFICATION_BADGE = '/apporder/icons/Icon-192.png';
+const APP_URL = 'https://pizzaonerestaurant.com/apporders/';
+const CACHE_NAME = 'pizzaone-pwa-v9';
+const NOTIFICATION_ICON = '/apporders/icons/Icon-192.png';
+const NOTIFICATION_BADGE = '/apporders/icons/Icon-192.png';
 
 // ================================================================
 //  Initialize Firebase
@@ -240,7 +240,7 @@ self.addEventListener('fetch', function(event) {
         return caches.match(event.request).then(function(cachedResponse) {
           if (cachedResponse) return cachedResponse;
           if (event.request.mode === 'navigate') {
-            return caches.match('/apporder/index.html');
+            return caches.match('/apporders/index.html');
           }
         });
       })
