@@ -545,8 +545,20 @@
       }
     });
 
-    // 6. Register Firebase Messaging Service Worker for Web Push
+    // 6. Service Worker Management
     if ('serviceWorker' in navigator) {
+      // Clean up legacy flutter_service_worker if present to prevent scope conflicts
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (var i = 0; i < registrations.length; i++) {
+          var reg = registrations[i];
+          if (reg.active && reg.active.scriptURL.indexOf('flutter_service_worker.js') !== -1) {
+            console.log('[PizzaOne PWA] Unregistering legacy flutter_service_worker:', reg.scope);
+            reg.unregister();
+          }
+        }
+      });
+
+      // Register clean Firebase Messaging Service Worker for Web Push
       navigator.serviceWorker.register('firebase-messaging-sw.js', { scope: '/apporders/' })
         .then(function(registration) {
           console.log('[PizzaOne PWA] Firebase SW registered:', registration.scope);

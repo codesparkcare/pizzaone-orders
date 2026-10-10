@@ -39,7 +39,7 @@ const FIREBASE_CONFIG = {
 // ================================================================
 const APP_NAME = 'Pizza One';
 const APP_URL = 'https://pizzaonerestaurant.com/apporders/';
-const CACHE_NAME = 'pizzaone-pwa-v9';
+const CACHE_NAME = 'pizzaone-pwa-v10';
 const NOTIFICATION_ICON = '/apporders/icons/Icon-192.png';
 const NOTIFICATION_BADGE = '/apporders/icons/Icon-192.png';
 
@@ -188,7 +188,6 @@ self.addEventListener('push', function(event) {
 // ================================================================
 self.addEventListener('install', function(event) {
   console.log('[Pizza SW] Service Worker installing...');
-  // Take control immediately without waiting
   self.skipWaiting();
 });
 
@@ -196,56 +195,25 @@ self.addEventListener('activate', function(event) {
   console.log('[Pizza SW] Service Worker activating...');
   event.waitUntil(
     Promise.all([
-      // Take control of all open clients immediately
+      // Claim all clients immediately
       clients.claim(),
-      // Clean up old caches
+      // Clean up all old caches completely so iOS never gets stuck
       caches.keys().then(function(cacheNames) {
         return Promise.all(
-          cacheNames
-            .filter(name => name !== CACHE_NAME)
-            .map(name => {
-              console.log('[Pizza SW] Deleting old cache:', name);
-              return caches.delete(name);
-            })
+          cacheNames.map(function(name) {
+            console.log('[Pizza SW] Deleting old cache:', name);
+            return caches.delete(name);
+          })
         );
       }),
     ])
   );
 });
 
-// ================================================================
-//  Fetch Handler – Network-First for app updates, cache fallback
-// ================================================================
-self.addEventListener('fetch', function(event) {
-  const url = new URL(event.request.url);
-
-  // Never intercept API requests
-  if (url.pathname.startsWith('/api/')) {
-    return;
-  }
-
-  // Network-First strategy: always fetch latest code from server, fallback to cache if offline
-  event.respondWith(
-    fetch(event.request)
-      .then(function(networkResponse) {
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then(function(cache) {
-            cache.put(event.request, responseToCache);
-          });
-        }
-        return networkResponse;
-      })
-      .catch(function() {
-        return caches.match(event.request).then(function(cachedResponse) {
-          if (cachedResponse) return cachedResponse;
-          if (event.request.mode === 'navigate') {
-            return caches.match('/apporders/index.html');
-          }
-        });
-      })
-  );
-});
+// NOTE: Do NOT add a fetch event listener here.
+// Adding a custom fetch listener in the Firebase Service Worker breaks
+// WebAssembly.compileStreaming for CanvasKit on iOS WebKit and causes
+// the PWA to hang on a black screen. Browser HTTP caching handles network directly.
 
 // ================================================================
 //  Message Handler – receive messages from Flutter app
