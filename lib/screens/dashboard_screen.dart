@@ -679,12 +679,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       } catch (_) {}
     } else {
       messenger.showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            '⚠️ Notification permission was not granted. Please check device Settings > Notifications > Pizza One.',
+            NotificationService().lastError ??
+                '⚠️ Notification permission was not granted. Please check device Settings > Notifications > Pizza One.',
           ),
           backgroundColor: Colors.orange,
-          duration: Duration(seconds: 4),
+          duration: const Duration(seconds: 4),
           behavior: SnackBarBehavior.floating,
         ),
       );

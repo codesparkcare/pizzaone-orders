@@ -381,9 +381,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           messenger.showSnackBar(
                             SnackBar(
                               content: Text(granted
-                                  ? 'Notifications enabled!'
-                                  : 'Permission not granted. Please check device Settings > Notifications > Pizza One.'),
+                                  ? 'Notifications enabled! Push token registered.'
+                                  : (notif.lastError ??
+                                      'Permission not granted. Please check device Settings > Notifications > Pizza One.')),
                               backgroundColor: granted ? Colors.green : Colors.red,
+                              duration: const Duration(seconds: 4),
+                              behavior: SnackBarBehavior.floating,
                             ),
                           );
                         }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -33,9 +34,23 @@ class NotificationService {
   bool _hasNotificationPermission = false;
   String? _fcmToken;
 
+  String? _lastError;
+
   String? get fcmToken => _fcmToken;
   bool get isFirebaseInitialized => _isFirebaseInitialized;
   bool get hasPermission => _hasNotificationPermission || (_fcmToken != null && _fcmToken!.isNotEmpty);
+  String? get lastError => _lastError;
+
+  String get _webServiceWorkerPath {
+    if (!kIsWeb) return 'firebase-messaging-sw.js';
+    final path = Uri.base.path;
+    if (path.contains('apporders')) {
+      return '/apporders/firebase-messaging-sw.js';
+    } else if (path.contains('apporder')) {
+      return '/apporder/firebase-messaging-sw.js';
+    }
+    return '/apporders/firebase-messaging-sw.js';
+  }
 
   Future<void> init({Function(String orderId)? onOrderNotificationTapped}) async {
     if (kIsWeb) {
@@ -152,8 +167,13 @@ class NotificationService {
             authToken: authToken,
             shopId: shopId,
           );
+        } else if (settings.authorizationStatus == AuthorizationStatus.denied) {
+          _hasNotificationPermission = false;
+          _lastError = 'iOS notification permission was denied. Please go to iPhone Settings > Notifications > Pizza One and turn on "Allow Notifications".';
+          return false;
         } else {
           _hasNotificationPermission = false;
+          _lastError = 'Notification permission not granted (${settings.authorizationStatus.name}). Please go to iPhone Settings > Notifications > Pizza One and turn on "Allow Notifications".';
           return false;
         }
       } else {
@@ -180,6 +200,7 @@ class NotificationService {
       }
     } catch (e) {
       debugPrint('[NotificationService] requestPermissionAndRegister error: $e');
+      _lastError = 'Notification error: $e';
       return false;
     }
   }
@@ -193,19 +214,25 @@ class NotificationService {
       final messaging = FirebaseMessaging.instance;
       _fcmToken = await messaging.getToken(
         vapidKey: 'BALStZad7DAgryb3phFjBtV54uC-ZkZoMX-8yAdz7NNqyGfrlO_E27BDaqADXpnreUvktABObnMOU5gqQHdwef4',
+        serviceWorkerScriptPath: _webServiceWorkerPath,
       );
-      debugPrint('[FCM Web Token] ${_fcmToken?.substring(0, 30)}...');
+      debugPrint('[FCM Web Token] ${_fcmToken != null ? (_fcmToken!.length > 30 ? _fcmToken!.substring(0, 30) : _fcmToken) : 'null'}...');
 
       if (_fcmToken != null && _fcmToken!.isNotEmpty) {
+        _hasNotificationPermission = true;
+        _lastError = null;
         await registerDeviceWithBackend(
           customBaseUrl: customBaseUrl,
           authToken: authToken,
           shopId: shopId,
         );
         return true;
+      } else {
+        _lastError = 'Push token was empty. Please check network connection.';
       }
     } catch (tokenError) {
       debugPrint('[FCM Web] Token fetch failed: $tokenError');
+      _lastError = 'Token registration failed: $tokenError';
     }
     return false;
   }
@@ -365,6 +392,19 @@ class NotificationService {
 
       final client = ApiClient(initialBaseUrl: baseUrl, token: savedToken);
 
+      int? effectiveShopId = shopId;
+      if (effectiveShopId == null) {
+        final userStr = prefs.getString('auth_user');
+        if (userStr != null) {
+          try {
+            final userMap = jsonDecode(userStr);
+            if (userMap is Map && userMap['shop_id'] != null) {
+              effectiveShopId = int.tryParse(userMap['shop_id'].toString());
+            }
+          } catch (_) {}
+        }
+      }
+
       // Identify platform accurately for the backend
       String platform;
       if (kIsWeb) {
@@ -378,7 +418,7 @@ class NotificationService {
         'token': _fcmToken,
         'platform': platform,
         'device_name': kIsWeb ? 'Web Browser / iOS PWA' : 'Mobile Device',
-        'shop_id': shopId,
+        'shop_id': effectiveShopId,
       }..removeWhere((key, value) => value == null);
 
       final response = await client.post(ApiConstants.registerToken, body: body);
