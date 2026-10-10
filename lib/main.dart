@@ -7,21 +7,18 @@ import 'providers/auth_provider.dart';
 import 'providers/order_provider.dart';
 import 'providers/settings_provider.dart';
 import 'screens/order_detail_screen.dart';
-import 'screens/splash_screen.dart';
+import 'screens/login_screen.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize sound player service
-  // On Web/iOS PWA: audio requires user interaction first (handled in dashboard init)
   AudioAlertService().init();
 
-  // Initialize Firebase Messaging + local notifications
-  // Web path: uses VAPID key, no flutter_local_notifications
-  // Native path: uses flutter_local_notifications + FCM
-  await NotificationService().init(
+  // Initialize Firebase Messaging in the background without blocking UI startup
+  NotificationService().init(
     onOrderNotificationTapped: (orderIdStr) {
       final orderId = int.tryParse(orderIdStr);
       if (orderId != null && navigatorKey.currentState != null) {
@@ -42,7 +39,7 @@ class PizzaOneOrderApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()..loadSettings()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => OrderProvider()),
       ],
@@ -53,7 +50,7 @@ class PizzaOneOrderApp extends StatelessWidget {
         theme: AppTheme.darkTheme,
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.dark,
-        home: const SplashScreen(),
+        home: const LoginScreen(),
       ),
     );
   }

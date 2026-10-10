@@ -65,63 +65,6 @@
       background-color: #0A0A0F;
       overflow: hidden;
     }
-    /* PWA Loading Screen */
-    #pwa-loading {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(135deg, #0A0A0F 0%, #1A0A00 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      transition: opacity 0.5s ease;
-    }
-    #pwa-loading.hidden { opacity: 0; pointer-events: none; }
-    .pwa-logo {
-      width: 80px;
-      height: 80px;
-      border-radius: 20px;
-      background: linear-gradient(135deg, #FF6B2B, #FF8C42);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 40px;
-      margin-bottom: 20px;
-      box-shadow: 0 0 40px rgba(255, 107, 43, 0.5);
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-    .pwa-title {
-      color: #FFFFFF;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: 2px;
-      margin-bottom: 8px;
-    }
-    .pwa-subtitle {
-      color: rgba(255,255,255,0.5);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      font-size: 13px;
-      letter-spacing: 1px;
-    }
-    .pwa-spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid rgba(255,107,43,0.2);
-      border-top-color: #FF6B2B;
-      border-radius: 50%;
-      margin-top: 30px;
-      animation: spin 0.8s linear infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(255, 107, 43, 0.5); }
-      50% { transform: scale(1.05); box-shadow: 0 0 60px rgba(255, 107, 43, 0.8); }
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
     /* Universal PWA Install Modal Overlay */
     #pwa-install-overlay {
       display: none;
@@ -308,14 +251,6 @@
   </style>
 </head>
 <body>
-
-  <!-- PWA Splash / Loading Screen -->
-  <div id="pwa-loading">
-    <div class="pwa-logo">🍕</div>
-    <div class="pwa-title">PIZZA ONE</div>
-    <div class="pwa-subtitle">Loading...</div>
-    <div class="pwa-spinner"></div>
-  </div>
 
   <!-- Universal PWA Install Popup Modal (for Android, Chrome, Edge, and iOS) -->
   <div id="pwa-install-overlay" role="dialog" aria-modal="true" aria-label="Install Pizza One App">
@@ -599,27 +534,7 @@
       }
     });
 
-    // 6. Hide the loading screen once Flutter is ready
-    window.addEventListener('flutter-first-frame', function() {
-      var loading = document.getElementById('pwa-loading');
-      if (loading) {
-        loading.classList.add('hidden');
-        setTimeout(function() {
-          loading.style.display = 'none';
-        }, 400);
-      }
-    });
-
-    // Fallback: hide loading after 6 seconds regardless so app is never stuck
-    setTimeout(function() {
-      var loading = document.getElementById('pwa-loading');
-      if (loading) {
-        loading.classList.add('hidden');
-        setTimeout(function() { loading.style.display = 'none'; }, 400);
-      }
-    }, 6000);
-
-    // 7. Register Firebase Messaging Service Worker for Web Push
+    // 6. Register Firebase Messaging Service Worker for Web Push
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('firebase-messaging-sw.js', { scope: '/apporder/' })
         .then(function(registration) {
