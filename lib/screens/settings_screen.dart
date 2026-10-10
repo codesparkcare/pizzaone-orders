@@ -294,6 +294,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                 ],
+                if (notif.fcmToken == null) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      icon: const Icon(Icons.notifications_active_rounded, size: 18),
+                      label: const Text('Enable Push Notifications', style: TextStyle(fontWeight: FontWeight.bold)),
+                      onPressed: () async {
+                        final messenger = ScaffoldMessenger.of(context);
+                        final granted = await notif.requestPermissionAndRegister(
+                          customBaseUrl: settings.baseUrl,
+                          authToken: auth.currentUser?.token,
+                          shopId: auth.currentUser?.shopId,
+                        );
+                        if (mounted) {
+                          setState(() {});
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(granted ? 'Notifications enabled!' : 'Permission not granted'),
+                              backgroundColor: granted ? Colors.green : Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 14),
                 SizedBox(
                   width: double.infinity,

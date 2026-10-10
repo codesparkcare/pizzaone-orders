@@ -191,8 +191,8 @@ class OrderProvider with ChangeNotifier {
       final currentPending = freshOrders.where((o) => o.isPending).map((o) => o.id).toSet();
       final newOrders = currentPending.difference(_knownPendingOrderIds);
 
-      if (newOrders.isNotEmpty && _knownPendingOrderIds.isNotEmpty) {
-        debugPrint('[OrderProvider] NEW ORDERS DETECTED: $newOrders');
+      if (newOrders.isNotEmpty) {
+        debugPrint('[OrderProvider] NEW PENDING ORDERS DETECTED: $newOrders');
         _hasActiveAlert = true;
 
         // Start continuous ringing chime
@@ -200,8 +200,8 @@ class OrderProvider with ChangeNotifier {
 
         // Show local push banner
         NotificationService().showOrderNotification(
-          title: '🍕 NOUVELLE COMMANDE REÇUE !',
-          body: '${newOrders.length} nouvelle(s) commande(s) en attente de confirmation.',
+          title: '🍕 NEW ORDER RECEIVED!',
+          body: '${newOrders.length} order(s) awaiting confirmation.',
           payload: newOrders.first.toString(),
         );
       }

@@ -30,13 +30,14 @@ class NotificationService {
   NotificationService._internal();
 
   bool _isFirebaseInitialized = false;
+  bool _hasNotificationPermission = false;
   String? _fcmToken;
 
   String? get fcmToken => _fcmToken;
   bool get isFirebaseInitialized => _isFirebaseInitialized;
+  bool get hasPermission => _hasNotificationPermission || (_fcmToken != null && _fcmToken!.isNotEmpty);
 
   Future<void> init({Function(String orderId)? onOrderNotificationTapped}) async {
-
     if (kIsWeb) {
       // Web (PWA) path: Only Firebase Messaging, no local notifications plugin
       await _initFirebaseWeb(onOrderNotificationTapped);
@@ -63,43 +64,25 @@ class NotificationService {
 
       final messaging = FirebaseMessaging.instance;
 
-      // Request Web push permission (required on iOS 16.4+ PWA and Chrome)
-      final settings = await messaging.requestPermission(
-        alert: true,
-        announcement: false,
-        badge: true,
-        carPlay: false,
-        criticalAlert: false,
-        provisional: false,
-        sound: true,
-      );
-
-      debugPrint('[FCM Web] Permission: ${settings.authorizationStatus}');
-
-      if (settings.authorizationStatus == AuthorizationStatus.denied) {
-        debugPrint('[FCM Web] Notifications permission denied by user');
-        return;
-      }
-
-      // Get FCM token with VAPID key (REQUIRED for Web Push)
-      // ⚠️  Replace 'YOUR_VAPID_KEY_HERE' with your VAPID key from:
-      //     Firebase Console → Project Settings → Cloud Messaging → Web Push certificates
+      // On iOS WebKit, checking existing permission does not prompt the user.
+      // If already granted in a previous session, fetch token and register immediately.
       try {
-        _fcmToken = await messaging.getToken(
-          vapidKey: 'BALStZad7DAgryb3phFjBtV54uC-ZkZoMX-8yAdz7NNqyGfrlO_E27BDaqADXpnreUvktABObnMOU5gqQHdwef4',
-        );
-        debugPrint('[FCM Web Token] ${_fcmToken?.substring(0, 30)}...');
-
-        if (_fcmToken != null && _fcmToken!.isNotEmpty) {
-          unawaited(registerDeviceWithBackend());
+        final settings = await messaging.getNotificationSettings();
+        debugPrint('[FCM Web] Current authorization status: ${settings.authorizationStatus}');
+        if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+          _hasNotificationPermission = true;
+          await _fetchWebTokenAndRegister();
+        } else {
+          _hasNotificationPermission = false;
         }
-      } catch (tokenError) {
-        debugPrint('[FCM Web] Token fetch failed (VAPID key may be missing): $tokenError');
+      } catch (e) {
+        debugPrint('[FCM Web] getNotificationSettings error: $e');
       }
 
-      // Token refresh
+      // Token refresh listener
       messaging.onTokenRefresh.listen((newToken) {
         _fcmToken = newToken;
+        _hasNotificationPermission = true;
         debugPrint('[FCM Web] Token refreshed');
         registerDeviceWithBackend();
       });
@@ -111,7 +94,7 @@ class NotificationService {
         // Play alert sound (after iOS audio is unlocked via first interaction)
         AudioAlertService().startRingtone();
 
-        // On Web, we show a browser Notification API notification for foreground too
+        // On Web, show browser Notification API notification for foreground too
         _showWebNotification(
           title: message.notification?.title ?? message.data['title'] ?? '🍕 Nouvelle Commande !',
           body: message.notification?.body ?? message.data['body'] ?? 'Nouvelle commande reçue',
@@ -133,6 +116,98 @@ class NotificationService {
       _isFirebaseInitialized = false;
       debugPrint('[NotificationService Web] Init error: $e');
     }
+  }
+
+  /// Request permission with an explicit user gesture (REQUIRED on iOS Safari / WebKit)
+  Future<bool> requestPermissionAndRegister({
+    String? customBaseUrl,
+    String? authToken,
+    int? shopId,
+  }) async {
+    try {
+      if (kIsWeb) {
+        if (Firebase.apps.isEmpty) {
+          await Firebase.initializeApp(
+            options: DefaultFirebaseOptions.currentPlatform,
+          );
+        }
+        final messaging = FirebaseMessaging.instance;
+
+        final settings = await messaging.requestPermission(
+          alert: true,
+          announcement: false,
+          badge: true,
+          carPlay: false,
+          criticalAlert: false,
+          provisional: false,
+          sound: true,
+        );
+
+        debugPrint('[FCM Web] User Request Permission Status: ${settings.authorizationStatus}');
+
+        if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+          _hasNotificationPermission = true;
+          return await _fetchWebTokenAndRegister(
+            customBaseUrl: customBaseUrl,
+            authToken: authToken,
+            shopId: shopId,
+          );
+        } else {
+          _hasNotificationPermission = false;
+          return false;
+        }
+      } else {
+        // Native path
+        final messaging = FirebaseMessaging.instance;
+        final settings = await messaging.requestPermission(
+          alert: true,
+          announcement: true,
+          badge: true,
+          sound: true,
+        );
+        if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+          _fcmToken = await messaging.getToken();
+          if (_fcmToken != null && _fcmToken!.isNotEmpty) {
+            await registerDeviceWithBackend(
+              customBaseUrl: customBaseUrl,
+              authToken: authToken,
+              shopId: shopId,
+            );
+            return true;
+          }
+        }
+        return false;
+      }
+    } catch (e) {
+      debugPrint('[NotificationService] requestPermissionAndRegister error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> _fetchWebTokenAndRegister({
+    String? customBaseUrl,
+    String? authToken,
+    int? shopId,
+  }) async {
+    try {
+      final messaging = FirebaseMessaging.instance;
+      _fcmToken = await messaging.getToken(
+        vapidKey: 'BALStZad7DAgryb3phFjBtV54uC-ZkZoMX-8yAdz7NNqyGfrlO_E27BDaqADXpnreUvktABObnMOU5gqQHdwef4',
+      );
+      debugPrint('[FCM Web Token] ${_fcmToken?.substring(0, 30)}...');
+
+      if (_fcmToken != null && _fcmToken!.isNotEmpty) {
+        await registerDeviceWithBackend(
+          customBaseUrl: customBaseUrl,
+          authToken: authToken,
+          shopId: shopId,
+        );
+        return true;
+      }
+    } catch (tokenError) {
+      debugPrint('[FCM Web] Token fetch failed: $tokenError');
+    }
+    return false;
   }
 
   /// Shows a browser Web Notification (fallback for foreground on web)

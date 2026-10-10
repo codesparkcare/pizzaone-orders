@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../core/theme/app_theme.dart';
+import '../core/utils/notification_service.dart';
 import '../core/utils/pwa_install_service.dart';
 import '../providers/auth_provider.dart';
 import '../providers/settings_provider.dart';
@@ -79,6 +80,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (success) {
       HapticFeedback.mediumImpact();
+
+      // Trigger notification permission while user interaction gesture is active
+      if (kIsWeb && !NotificationService().hasPermission) {
+        NotificationService().requestPermissionAndRegister(
+          customBaseUrl: settings.baseUrl,
+          authToken: auth.currentUser?.token,
+          shopId: auth.currentUser?.shopId,
+        );
+      }
+
       order.startAutoPolling(
         baseUrl: settings.baseUrl,
         token: auth.currentUser?.token,

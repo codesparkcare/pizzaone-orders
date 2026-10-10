@@ -1,9 +1,12 @@
 import "package:flutter/material.dart";
 import "package:flutter/foundation.dart" show kIsWeb;
 import "package:provider/provider.dart";
+import "../core/api/api_client.dart";
+import "../core/api/api_constants.dart";
 import "../core/localization/app_strings.dart";
 import "../core/theme/app_theme.dart";
 import "../core/utils/audio_alert_service.dart";
+import "../core/utils/notification_service.dart";
 import "../core/utils/wake_lock_service.dart";
 import "../providers/auth_provider.dart";
 import "../providers/settings_provider.dart";
@@ -26,6 +29,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final _searchController = TextEditingController();
   final _wakeLock = WakeLockService();
   bool _wakeLockEnabled = false;
+  bool _notificationPermissionGranted = NotificationService().hasPermission;
+  bool _isRequestingPermission = false;
 
   @override
   void initState() {
@@ -33,6 +38,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _startPolling();
       _setupWebVisibilityRefresh();
+      if (mounted) {
+        setState(() {
+          _notificationPermissionGranted = NotificationService().hasPermission;
+        });
+      }
     });
   }
 
@@ -139,6 +149,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         actions: [
+          // Push Notification Bell Status & Test
+          IconButton(
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            padding: EdgeInsets.zero,
+            icon: Icon(
+              _notificationPermissionGranted ? Icons.notifications_active_rounded : Icons.notifications_none_rounded,
+              color: _notificationPermissionGranted ? Colors.greenAccent : Colors.amberAccent,
+              size: 20,
+            ),
+            tooltip: _notificationPermissionGranted
+                ? "Notifications Active (tap for test push)"
+                : "Notifications Disabled (tap to enable)",
+            onPressed: () {
+              if (_notificationPermissionGranted) {
+                _sendTestNotification(context);
+              } else {
+                _enableNotifications(context);
+              }
+            },
+          ),
 
           // Screen Wake Lock (iOS PWA Kitchen Mode - keeps screen on)
           if (kIsWeb)
@@ -218,6 +248,63 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 order.dismissActiveAlert();
                 order.setStatusFilter("pending");
               },
+            ),
+
+          // iOS Web Push Notification Enable Banner (shown if permissions not granted)
+          if (kIsWeb && !_notificationPermissionGranted)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.primary.withValues(alpha: 0.22),
+                    Colors.orange.shade900.withValues(alpha: 0.3),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppTheme.primary.withValues(alpha: 0.7)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.notifications_active_rounded, color: AppTheme.primary, size: 24),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Order Notifications Disabled',
+                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Tap ENABLE to allow iPhone sound & lock-screen alerts',
+                          style: TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      elevation: 0,
+                    ),
+                    onPressed: _isRequestingPermission ? null : () => _enableNotifications(context),
+                    child: _isRequestingPermission
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Text('ENABLE', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                  ),
+                ],
+              ),
             ),
 
           // Top Metrics Row
@@ -487,5 +574,88 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
       },
     );
+  }
+
+  Future<void> _enableNotifications(BuildContext context) async {
+    if (_isRequestingPermission) return;
+    setState(() => _isRequestingPermission = true);
+
+    final settings = context.read<SettingsProvider>();
+    final auth = context.read<AuthProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    // Direct user tap satisfies iOS Safari / WebKit User Gesture requirement
+    final granted = await NotificationService().requestPermissionAndRegister(
+      customBaseUrl: settings.baseUrl,
+      authToken: auth.currentUser?.token,
+      shopId: auth.currentUser?.shopId,
+    );
+
+    if (mounted) {
+      setState(() {
+        _isRequestingPermission = false;
+        _notificationPermissionGranted = granted;
+      });
+    }
+
+    if (granted) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('🔔 Notifications enabled! Sending test notification...'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      // Trigger a test notification immediately so the user sees the iOS push banner
+      try {
+        final client = ApiClient(initialBaseUrl: settings.baseUrl, token: auth.currentUser?.token);
+        await client.get(ApiConstants.testNotification);
+      } catch (_) {}
+    } else {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            '⚠️ Notification permission was not granted. Please check iOS Settings > Notifications > Pizza One.',
+          ),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 4),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _sendTestNotification(BuildContext context) async {
+    final settings = context.read<SettingsProvider>();
+    final auth = context.read<AuthProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('Sending test push to this device...'),
+        duration: Duration(seconds: 1),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+
+    try {
+      final client = ApiClient(initialBaseUrl: settings.baseUrl, token: auth.currentUser?.token);
+      final res = await client.get(ApiConstants.testNotification);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(res.message.isNotEmpty ? res.message : 'Test notification sent!'),
+          backgroundColor: res.success ? Colors.green : Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Error sending test push: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 }
