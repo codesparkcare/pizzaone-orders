@@ -339,6 +339,17 @@
                 (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) &&
                 !window.MSStream;
 
+    window.isPwaStandalone = function() {
+      return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+             (window.navigator.standalone === true) ||
+             document.referrer.includes('android-app://');
+    };
+    window.isIOSDevice = function() {
+      return (/iP(ad|hone|od)/.test(navigator.userAgent) ||
+             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) &&
+             !window.MSStream;
+    };
+
     function showPwaInstallModal() {
       if (isStandalone) {
         alert('Pizza One is already installed and running on this device!');

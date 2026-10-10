@@ -7,4 +7,19 @@ class PwaInstallService {
       PwaPlatform.showInstallPrompt();
     }
   }
+
+  static bool isStandalone() {
+    if (kIsWeb) {
+      return PwaPlatform.isStandalone();
+    }
+    return true; // Native apps are always standalone
+  }
+
+  static bool isIOS() {
+    if (kIsWeb) {
+      return PwaPlatform.isIOS();
+    }
+    return defaultTargetPlatform == TargetPlatform.iOS;
+  }
 }
+

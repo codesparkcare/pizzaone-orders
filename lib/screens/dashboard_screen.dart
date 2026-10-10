@@ -7,6 +7,7 @@ import "../core/localization/app_strings.dart";
 import "../core/theme/app_theme.dart";
 import "../core/utils/audio_alert_service.dart";
 import "../core/utils/notification_service.dart";
+import "../core/utils/pwa_install_service.dart";
 import "../core/utils/wake_lock_service.dart";
 import "../providers/auth_provider.dart";
 import "../providers/settings_provider.dart";
@@ -138,7 +139,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   Text(
-                    auth.currentUser?.shopName ?? context.tr("orders"),
+                    ((auth.currentUser?.shopName ?? '').toLowerCase().contains('toutes') ||
+                            (auth.currentUser?.shopName ?? '').isEmpty)
+                        ? 'All Stores'
+                        : auth.currentUser!.shopName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 10, color: AppTheme.textMuted),
@@ -576,8 +580,70 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  void _showIosInstallGuide(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E212A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFF5722).withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.install_mobile_rounded, color: Color(0xFFFF5722), size: 36),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Add to Home Screen Required',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'On iPhone, push notifications and lock-screen sound alerts only work when Pizza One is added to your Home Screen.\n\n1. Tap the Share button (or 3 dots in Chrome)\n2. Select "Add to Home Screen"\n3. Open Pizza One from your Home Screen & tap Enable',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  PwaInstallService.promptInstall();
+                },
+                icon: const Icon(Icons.touch_app_rounded),
+                label: const Text('View Installation Steps'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF5722),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _enableNotifications(BuildContext context) async {
     if (_isRequestingPermission) return;
+
+    if (kIsWeb && PwaInstallService.isIOS() && !PwaInstallService.isStandalone()) {
+      _showIosInstallGuide(context);
+      return;
+    }
+
     setState(() => _isRequestingPermission = true);
 
     final settings = context.read<SettingsProvider>();
@@ -615,7 +681,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       messenger.showSnackBar(
         const SnackBar(
           content: Text(
-            '⚠️ Notification permission was not granted. Please check iOS Settings > Notifications > Pizza One.',
+            '⚠️ Notification permission was not granted. Please check device Settings > Notifications > Pizza One.',
           ),
           backgroundColor: Colors.orange,
           duration: Duration(seconds: 4),
@@ -643,7 +709,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final res = await client.get(ApiConstants.testNotification);
       messenger.showSnackBar(
         SnackBar(
-          content: Text(res.message.isNotEmpty ? res.message : 'Test notification sent!'),
+          content: Text(res.success
+              ? (res.message.isNotEmpty ? res.message : 'Test notification sent to registered devices!')
+              : (res.message.isNotEmpty ? res.message : 'Failed to send test push')),
           backgroundColor: res.success ? Colors.green : Colors.red,
           behavior: SnackBarBehavior.floating,
         ),

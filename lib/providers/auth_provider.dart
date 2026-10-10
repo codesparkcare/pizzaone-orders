@@ -145,13 +145,13 @@ class AuthProvider with ChangeNotifier {
       } else {
         _errorMessage = response.message.isNotEmpty
             ? response.message
-            : 'Identifiant ou mot de passe incorrect.';
+            : 'Invalid username or password.';
         _isLoading = false;
         notifyListeners();
         return false;
       }
     } catch (e) {
-      _errorMessage = 'Erreur lors de la connexion: $e';
+      _errorMessage = 'Login error: $e';
       _isLoading = false;
       notifyListeners();
       return false;

@@ -23,6 +23,62 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _isTestingPush = false;
 
+  void _showIosInstallGuide(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E212A),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.install_mobile_rounded, color: AppTheme.primary, size: 36),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Add to Home Screen Required',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'On iPhone, push notifications only work when Pizza One is added to your Home Screen.\n\n1. Tap the Share button in Safari or Chrome\n2. Select "Add to Home Screen"\n3. Open Pizza One from your Home Screen & tap Enable',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  PwaInstallService.promptInstall();
+                },
+                icon: const Icon(Icons.touch_app_rounded),
+                label: const Text('View Installation Steps'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _testPushNotification() async {
     setState(() => _isTestingPush = true);
     final settings = context.read<SettingsProvider>();
@@ -35,7 +91,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response.message.isNotEmpty ? response.message : 'Test notification sent!'),
+            content: Text(response.success
+                ? (response.message.isNotEmpty ? response.message : 'Test notification sent to registered devices!')
+                : (response.message.isNotEmpty ? response.message : 'Failed to send test notification')),
             backgroundColor: response.success ? Colors.green : Colors.red,
             behavior: SnackBarBehavior.floating,
           ),
@@ -308,6 +366,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       icon: const Icon(Icons.notifications_active_rounded, size: 18),
                       label: const Text('Enable Push Notifications', style: TextStyle(fontWeight: FontWeight.bold)),
                       onPressed: () async {
+                        if (kIsWeb && PwaInstallService.isIOS() && !PwaInstallService.isStandalone()) {
+                          _showIosInstallGuide(context);
+                          return;
+                        }
                         final messenger = ScaffoldMessenger.of(context);
                         final granted = await notif.requestPermissionAndRegister(
                           customBaseUrl: settings.baseUrl,
@@ -318,7 +380,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           setState(() {});
                           messenger.showSnackBar(
                             SnackBar(
-                              content: Text(granted ? 'Notifications enabled!' : 'Permission not granted'),
+                              content: Text(granted
+                                  ? 'Notifications enabled!'
+                                  : 'Permission not granted. Please check device Settings > Notifications > Pizza One.'),
                               backgroundColor: granted ? Colors.green : Colors.red,
                             ),
                           );

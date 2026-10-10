@@ -57,7 +57,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Erreur: $e';
+        _errorMessage = 'Error: $e';
         _isLoading = false;
       });
     }
@@ -132,11 +132,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             children: [
               const Icon(Icons.error_outline_rounded, size: 48, color: AppTheme.statusCancelled),
               const SizedBox(height: 16),
-              Text(_errorMessage ?? 'Erreur', style: const TextStyle(color: Colors.white)),
+              Text(_errorMessage ?? 'Error', style: const TextStyle(color: Colors.white)),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _loadOrderDetails,
-                child: const Text('Réessayer'),
+                child: const Text('Retry'),
               ),
             ],
           ),

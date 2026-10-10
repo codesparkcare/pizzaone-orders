@@ -39,7 +39,7 @@ const FIREBASE_CONFIG = {
 // ================================================================
 const APP_NAME = 'Pizza One';
 const APP_URL = 'https://pizzaonerestaurant.com/apporder/';
-const CACHE_NAME = 'pizzaone-pwa-v7';
+const CACHE_NAME = 'pizzaone-pwa-v8';
 const NOTIFICATION_ICON = '/apporder/icons/Icon-192.png';
 const NOTIFICATION_BADGE = '/apporder/icons/Icon-192.png';
 

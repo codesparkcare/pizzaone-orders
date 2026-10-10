@@ -30,8 +30,25 @@ class ApiClient {
     _authToken = token;
   }
 
-  String get baseUrl => _baseUrl;
+  String get baseUrl => effectiveBaseUrl;
   String? get authToken => _authToken;
+
+  String get effectiveBaseUrl {
+    if (kIsWeb) {
+      try {
+        final origin = Uri.base.origin;
+        if (origin.isNotEmpty && origin.startsWith('http')) {
+          final originHost = Uri.parse(origin).host.toLowerCase();
+          final baseHost = Uri.parse(_baseUrl).host.toLowerCase();
+          if (originHost.contains('pizzaonerestaurant.com') &&
+              baseHost.contains('pizzaonerestaurant.com')) {
+            return origin;
+          }
+        }
+      } catch (_) {}
+    }
+    return _baseUrl;
+  }
 
   void updateBaseUrl(String newUrl) {
     _baseUrl = sanitizeUrl(newUrl);
@@ -53,8 +70,13 @@ class ApiClient {
     final headers = <String, String>{
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'User-Agent': 'PizzaOneOrderApp/1.0.0 (Flutter; Mobile)',
     };
+    // In web browsers (WebKit/Safari/Chrome), User-Agent is a restricted header name.
+    // Setting it causes browsers to fail CORS preflight or throw 'TypeError: Load failed'.
+    // We only set it on native platforms.
+    if (!kIsWeb) {
+      headers['User-Agent'] = 'PizzaOneOrderApp/1.0.0 (Flutter; Mobile)';
+    }
     if (_authToken != null && _authToken!.isNotEmpty) {
       headers['Authorization'] = 'Bearer $_authToken';
     }
@@ -63,7 +85,7 @@ class ApiClient {
 
   Future<ApiResponse> get(String endpoint, {Map<String, String>? queryParams}) async {
     try {
-      var uri = Uri.parse('$_baseUrl$endpoint');
+      var uri = Uri.parse('$effectiveBaseUrl$endpoint');
       if (queryParams != null && queryParams.isNotEmpty) {
         uri = uri.replace(queryParameters: queryParams);
       }
@@ -82,27 +104,27 @@ class ApiClient {
       return ApiResponse(
         success: false,
         statusCode: 0,
-        message: 'Impossible de se connecter au serveur ($_baseUrl). Vérifiez la connexion Internet.',
+        message: 'Unable to connect to server ($effectiveBaseUrl). Check internet connection.',
       );
     } on TimeoutException {
       return ApiResponse(
         success: false,
         statusCode: 408,
-        message: 'Délai d\'attente dépassé. Le serveur ne répond pas.',
+        message: 'Connection timed out. Server is not responding.',
       );
     } catch (e) {
       debugPrint('[API Error] $e');
       return ApiResponse(
         success: false,
         statusCode: 500,
-        message: 'Erreur inattendue: $e',
+        message: 'Network error: $e',
       );
     }
   }
 
   Future<ApiResponse> post(String endpoint, {dynamic body}) async {
     try {
-      final uri = Uri.parse('$_baseUrl$endpoint');
+      final uri = Uri.parse('$effectiveBaseUrl$endpoint');
       final encodedBody = body != null ? jsonEncode(body) : null;
 
       if (kDebugMode) {
@@ -119,20 +141,20 @@ class ApiClient {
       return ApiResponse(
         success: false,
         statusCode: 0,
-        message: 'Impossible de joindre le serveur ($_baseUrl).',
+        message: 'Unable to connect to server ($effectiveBaseUrl).',
       );
     } on TimeoutException {
       return ApiResponse(
         success: false,
         statusCode: 408,
-        message: 'Délai d\'attente dépassé lors de la requête.',
+        message: 'Request timed out.',
       );
     } catch (e) {
       debugPrint('[API Error] $e');
       return ApiResponse(
         success: false,
         statusCode: 500,
-        message: 'Erreur inattendue: $e',
+        message: 'Network error: $e',
       );
     }
   }
@@ -150,7 +172,7 @@ class ApiClient {
     if (jsonBody is Map && jsonBody.containsKey('message')) {
       message = jsonBody['message'].toString();
     } else if (!isSuccess) {
-      message = 'Erreur HTTP ${response.statusCode}';
+      message = 'HTTP Error ${response.statusCode}';
     }
 
     return ApiResponse(

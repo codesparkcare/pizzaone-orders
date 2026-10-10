@@ -169,7 +169,7 @@ class OrderProvider with ChangeNotifier {
         _errorMessage = response.message;
       }
     } catch (e) {
-      _errorMessage = 'Erreur lors du chargement des commandes: $e';
+      _errorMessage = 'Error loading orders: $e';
     } finally {
       _isLoading = false;
       notifyListeners();
